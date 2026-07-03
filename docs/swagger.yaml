@@ -1,0 +1,164 @@
+basePath: /api/v1
+definitions:
+  auth.RegisterRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      name:
+        example: John Doe
+        type: string
+      password:
+        example: SecurePass123
+        minLength: 6
+        type: string
+      phone_number:
+        example: "+254712345678"
+        type: string
+      role:
+        enum:
+        - consumer
+        - business
+        example: consumer
+        type: string
+    required:
+    - email
+    - name
+    - password
+    - phone_number
+    type: object
+  auth.ResendOTPRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+    required:
+    - email
+    type: object
+  auth.VerifyOTPRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Backend API engine for Flownatty platform.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Flownatty Backend API
+  version: "1.0"
+paths:
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with phone, email, and password. Sends OTP
+        via email.
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP sent successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new user
+      tags:
+      - Auth
+  /auth/resend-otp:
+    post:
+      consumes:
+      - application/json
+      description: Resend OTP to the user's email for registration
+      parameters:
+      - description: Email to resend OTP
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.ResendOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OTP resent successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Resend OTP
+      tags:
+      - Auth
+  /auth/verify-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify the OTP sent to the user's email and create the account
+      parameters:
+      - description: OTP verification details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Account created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Invalid OTP
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Server error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Verify OTP and create account
+      tags:
+      - Auth
+swagger: "2.0"
