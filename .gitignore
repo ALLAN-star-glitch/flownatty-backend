@@ -1,0 +1,65 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go workspace
+go.work
+go.work.sum
+
+# Dependency directories
+vendor/
+
+# IDE files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Binary output
+/flownatty-backend
+flownatty-backend
+/bin
+/bin/*
+dist/
+
+# Test coverage
+*.coverprofile
+*.prof
+
+# Build output
+bin/
+dist/
+
+# Logs
+*.log
+
+# Swagger docs (if you want to exclude, but usually keep)
+# docs/
+
+# Temporary files
+tmp/
+temp/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Backup files
+*.bak
+*.backup
