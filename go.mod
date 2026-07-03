@@ -2,6 +2,8 @@ module github.com/ALLAN-star-glitch/flownatty-backend
 
 go 1.26.1
 
+require github.com/swaggo/files v1.0.1
+
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.2.2 // indirect
@@ -51,7 +53,8 @@ require (
 	github.com/pelletier/go-toml/v2 v2.4.2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.60.0 // indirect
-	github.com/swaggo/files v1.0.1
+	github.com/resend/resend-go/v2 v2.28.0 // indirect
+	github.com/resend/resend-go/v3 v3.9.2 // indirect
 	github.com/swaggo/gin-swagger v1.6.1 // indirect
 	github.com/swaggo/swag v1.16.6 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

@@ -13,7 +13,13 @@ type Config struct {
     Database    DatabaseConfig
     JWT         JWTConfig
     Email       EmailConfig
+    Resend      ResendConfig
     Environment string
+}
+
+type ResendConfig struct {
+	ApiKey string
+	From   string
 }
 
 type ServerConfig struct {
@@ -68,6 +74,10 @@ func Load() *Config {
             APIKey: getEnv("SENDGRID_API_KEY", ""),
             From:   getEnv("EMAIL_FROM", "noreply@flownatty.com"),
         },
+		Resend: ResendConfig{
+			ApiKey: getEnv("RESEND_API_KEY", ""),
+			From:   getEnv("EMAIL_FROM", "noreply@flownatty.com"),
+		},
     }
 }
 
