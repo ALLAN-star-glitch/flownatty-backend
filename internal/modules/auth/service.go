@@ -189,16 +189,18 @@ func (s *AuthService) EnqueueWelcomeEmail(to, name string) error {
 }
 
 // Generate JWT token
-func (s *AuthService) GenerateToken(userID string) (string, error) {
-    claims := jwt.MapClaims{
-        "user_id": userID,
-        "exp":     time.Now().Add(s.config.JWT.Expiration).Unix(),
-        "iat":     time.Now().Unix(),
-    }
+func (s *AuthService) GenerateToken(userID string, role string) (string, error) {
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"role":    role, 
+		"exp":     time.Now().Add(s.config.JWT.Expiration).Unix(),
+		"iat":     time.Now().Unix(),
+	}
 
-    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString([]byte(s.config.JWT.Secret))
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString([]byte(s.config.JWT.Secret))
 }
+
 
 // Validate JWT token
 func (s *AuthService) ValidateToken(tokenString string) (string, error) {

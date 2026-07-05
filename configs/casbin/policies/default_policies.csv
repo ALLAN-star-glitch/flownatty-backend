@@ -1,0 +1,161 @@
+# ============================================================
+# PLATFORM POLICIES
+# ============================================================
+
+# Super Admin - Full platform access
+p, super_admin, platform, *, *
+
+# Admin - Limited platform management
+p, admin, platform, user, read
+p, admin, platform, user, update
+p, admin, platform, business, read
+p, admin, platform, analytics, read
+p, admin, platform, platform, read
+p, admin, platform, platform, update
+
+# ============================================================
+# CONSUMER POLICIES (Global - any domain)
+# ============================================================
+
+# Product - Read only (public)
+p, consumer, *, product, read
+
+# Order - Create and read own orders
+p, consumer, *, order, create
+p, consumer, *, order, read
+
+# Booking - Create and read own bookings
+p, consumer, *, booking, create
+p, consumer, *, booking, read
+
+# Chat - Create and read messages
+p, consumer, *, chat, create
+p, consumer, *, chat, read
+
+# Business - Read only
+p, consumer, *, business, read
+
+# Service - Read only
+p, consumer, *, service, read
+
+# Post - Read and interact
+p, consumer, *, post, read
+p, consumer, *, post, like
+p, consumer, *, post, comment
+
+# Follow - Manage follows
+p, consumer, *, follow, create
+p, consumer, *, follow, delete
+
+# Notification - Read own
+p, consumer, *, notification, read
+
+# Cart - Manage own cart
+p, consumer, *, cart, create
+p, consumer, *, cart, read
+p, consumer, *, cart, update
+p, consumer, *, cart, delete
+
+# Wishlist - Manage own wishlist
+p, consumer, *, wishlist, create
+p, consumer, *, wishlist, read
+p, consumer, *, wishlist, delete
+
+# ============================================================
+# BUSINESS OWNER POLICIES (Domain-Specific)
+# Note: {{.BusinessID}} is replaced with actual business ID
+# These are templates - actual policies added per business
+# ============================================================
+
+# Product Management
+p, business_owner, {{.BusinessID}}, product, create
+p, business_owner, {{.BusinessID}}, product, read
+p, business_owner, {{.BusinessID}}, product, update
+p, business_owner, {{.BusinessID}}, product, delete
+
+# Order Management
+p, business_owner, {{.BusinessID}}, order, read
+p, business_owner, {{.BusinessID}}, order, update
+p, business_owner, {{.BusinessID}}, order, delete
+
+# Booking Management
+p, business_owner, {{.BusinessID}}, booking, read
+p, business_owner, {{.BusinessID}}, booking, update
+p, business_owner, {{.BusinessID}}, booking, delete
+p, business_owner, {{.BusinessID}}, booking, confirm
+p, business_owner, {{.BusinessID}}, booking, complete
+p, business_owner, {{.BusinessID}}, booking, cancel
+
+# Post Management
+p, business_owner, {{.BusinessID}}, post, create
+p, business_owner, {{.BusinessID}}, post, read
+p, business_owner, {{.BusinessID}}, post, update
+p, business_owner, {{.BusinessID}}, post, delete
+
+# Chat Management
+p, business_owner, {{.BusinessID}}, chat, read
+p, business_owner, {{.BusinessID}}, chat, create
+p, business_owner, {{.BusinessID}}, chat, update
+
+# Business Profile Management
+p, business_owner, {{.BusinessID}}, business, read
+p, business_owner, {{.BusinessID}}, business, update
+p, business_owner, {{.BusinessID}}, business, delete
+
+# Invoice Management
+p, business_owner, {{.BusinessID}}, invoice, create
+p, business_owner, {{.BusinessID}}, invoice, read
+p, business_owner, {{.BusinessID}}, invoice, update
+p, business_owner, {{.BusinessID}}, invoice, delete
+p, business_owner, {{.BusinessID}}, invoice, send
+p, business_owner, {{.BusinessID}}, invoice, mark_paid
+
+# Lead Management
+p, business_owner, {{.BusinessID}}, lead, create
+p, business_owner, {{.BusinessID}}, lead, read
+p, business_owner, {{.BusinessID}}, lead, update
+p, business_owner, {{.BusinessID}}, lead, delete
+p, business_owner, {{.BusinessID}}, lead, convert
+
+# Customer Management
+p, business_owner, {{.BusinessID}}, customer, read
+p, business_owner, {{.BusinessID}}, customer, update
+p, business_owner, {{.BusinessID}}, customer, delete
+
+# Payment Management
+p, business_owner, {{.BusinessID}}, payment, read
+p, business_owner, {{.BusinessID}}, payment, refund
+
+# Dashboard
+p, business_owner, {{.BusinessID}}, dashboard, read
+
+# Analytics
+p, business_owner, {{.BusinessID}}, analytics, read
+
+# ============================================================
+# BUSINESS STAFF POLICIES (Domain-Specific - Limited Access)
+# ============================================================
+
+# Order - Read and update only
+p, business_staff, {{.BusinessID}}, order, read
+p, business_staff, {{.BusinessID}}, order, update
+
+# Booking - Read and update only
+p, business_staff, {{.BusinessID}}, booking, read
+p, business_staff, {{.BusinessID}}, booking, update
+
+# Chat - Read and reply
+p, business_staff, {{.BusinessID}}, chat, read
+p, business_staff, {{.BusinessID}}, chat, create
+
+# Customer - Read only
+p, business_staff, {{.BusinessID}}, customer, read
+
+# Product - Read only
+p, business_staff, {{.BusinessID}}, product, read
+
+# Payment - Read only
+p, business_staff, {{.BusinessID}}, payment, read
+
+# Dashboard - Read only
+p, business_staff, {{.BusinessID}}, dashboard, read

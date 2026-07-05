@@ -1,0 +1,12 @@
+# Role Hierarchy Definitions
+# Format: user, role, domain
+# Note: These are default assignments
+
+# System Roles
+g, system, super_admin, platform
+
+# Default Consumer Role (assigned to all registered consumers)
+g, consumer_default, consumer, platform
+
+# Default Business Owner Template (assigned per business)
+# Actual assignments happen at business creation time

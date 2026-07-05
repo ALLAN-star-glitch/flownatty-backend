@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"context"
 	"log"
 	"time"
 
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/auth/permissions"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/models"
 	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/email"
@@ -17,9 +19,16 @@ type AuthHandler struct {
 	repo         *AuthRepository
 	config       *config.Config
 	emailService *email.EmailService
+	permService  *permissions.Service
 }
 
-func NewAuthHandler(service *AuthService, repo *AuthRepository, cfg *config.Config) *AuthHandler {
+// Updated constructor to accept permissions service
+func NewAuthHandler(
+	service *AuthService,
+	repo *AuthRepository,
+	cfg *config.Config,
+	permService *permissions.Service,
+) *AuthHandler {
 	emailSvc := email.NewEmailService(cfg.Resend.ApiKey, cfg.Resend.From)
 
 	return &AuthHandler{
@@ -27,6 +36,7 @@ func NewAuthHandler(service *AuthService, repo *AuthRepository, cfg *config.Conf
 		repo:         repo,
 		config:       cfg,
 		emailService: emailSvc,
+		permService:  permService,
 	}
 }
 
@@ -50,8 +60,21 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	// Default to consumer if role not provided
 	if req.Role == "" {
-		req.Role = "consumer"
+		req.Role = permissions.RoleConsumer.String()
+	}
+
+	// Validate role is one of the allowed roles
+	if req.Role != permissions.RoleConsumer.String() && req.Role != permissions.RoleBusinessOwner.String() {
+		response.BadRequest(c, "Invalid role", gin.H{
+			"allowed_roles": []string{
+				permissions.RoleConsumer.String(),
+				permissions.RoleBusinessOwner.String(),
+			},
+			"provided": req.Role,
+		})
+		return
 	}
 
 	existingUser, _ := h.repo.GetUserByEmail(req.Email)
@@ -127,6 +150,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	respData := gin.H{
 		"email":      req.Email,
 		"phone":      req.Phone,
+		"role":       req.Role,
 		"expires_at": time.Now().Add(5 * time.Minute),
 	}
 
@@ -181,7 +205,32 @@ func (h *AuthHandler) createUserFromData(c *gin.Context, userEmail string, userD
 		return
 	}
 
-	token, err := h.service.GenerateToken(user.ID.String())
+	// Assign roles based on user type using permissions package constants
+	ctx := context.Background() // Use context.Background() for permission service calls
+	switch user.Role {
+	case permissions.RoleConsumer.String():
+		// Assign consumer role
+		if err := h.permService.AssignConsumerRole(ctx, user.ID.String()); err != nil {
+			log.Printf("Failed to assign consumer role to user %s: %v", user.ID, err)
+		} else {
+			log.Printf("Assigned consumer role to user: %s", user.ID)
+		}
+
+	case permissions.RoleBusinessOwner.String():
+		// For business users, they get consumer role first (they're also consumers)
+		if err := h.permService.AssignConsumerRole(ctx, user.ID.String()); err != nil {
+			log.Printf("Failed to assign consumer role to user %s: %v", user.ID, err)
+		} else {
+			log.Printf("Assigned consumer role to business user: %s", user.ID)
+		}
+		// Business owner role will be assigned when they create their business
+		log.Printf("Business user created: %s - waiting for business creation to assign owner role", user.ID)
+
+	default:
+		log.Printf("Unknown role: %s, skipping permission assignment", user.Role)
+	}
+
+	token, err := h.service.GenerateToken(user.ID.String(), user.Role)
 	if err != nil {
 		response.InternalError(c, "Failed to generate token", gin.H{
 			"error": err.Error(),
@@ -230,8 +279,6 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 	storedOTP, err := h.service.GetOTP(req.Email)
 
 	if err != nil {
-		// OTP not found in Redis - check if 123456 fallback is allowed
-		// In production, 123456 is NOT a valid OTP
 		response.BadRequest(c, "Invalid or expired OTP", gin.H{
 			"email": req.Email,
 		})
