@@ -14,7 +14,17 @@ type Config struct {
     JWT         JWTConfig
     Email       EmailConfig
     Resend      ResendConfig
+    Redis       RedisConfig
+    OTP         OTPConfig  
     Environment string
+}
+
+type OTPConfig struct {
+    TTL time.Duration  // How long OTP is valid
+}
+
+type RedisConfig struct {
+    URL string
 }
 
 type ResendConfig struct {
@@ -78,6 +88,12 @@ func Load() *Config {
 			ApiKey: getEnv("RESEND_API_KEY", ""),
 			From:   getEnv("EMAIL_FROM", "noreply@flownatty.com"),
 		},
+        OTP: OTPConfig{
+            TTL: 5 * time.Minute,  // OTP expires in 5 minutes
+        },
+        Redis: RedisConfig{
+            URL: getEnv("REDIS_URL", "localhost:6379"),
+        },
     }
 }
 

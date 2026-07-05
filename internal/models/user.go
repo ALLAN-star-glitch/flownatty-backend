@@ -20,6 +20,7 @@ type User struct {
     VerifiedAt        *time.Time `json:"verified_at"`
     EmailVerifiedAt   *time.Time `json:"email_verified_at"`
     LastLoginAt       *time.Time `json:"last_login_at"`
+    LastActiveAt      *time.Time `json:"last_active_at"` 
     BusinessID        *uuid.UUID `gorm:"index" json:"business_id,omitempty"`
     Business          *Business  `gorm:"foreignKey:BusinessID" json:"business,omitempty"`
 }

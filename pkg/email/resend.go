@@ -19,11 +19,18 @@ func NewEmailService(apiKey, from string) *EmailService {
 	}
 }
 
+// OTPEmailData - for OTP verification emails
 type OTPEmailData struct {
 	To      string
 	Name    string
 	OTP     string
 	Expires string
+}
+
+// WelcomeEmailData - for welcome emails
+type WelcomeEmailData struct {
+	To   string
+	Name string
 }
 
 func (s *EmailService) SendOTP(data OTPEmailData) error {
@@ -38,7 +45,7 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #F8FAFC;
-            padding: 40px;
+            padding: 20px;
             margin: 0;
         }
         .container {
@@ -46,7 +53,7 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
             margin: 0 auto;
             background-color: #FFFFFF;
             border-radius: 16px;
-            padding: 48px 40px;
+            padding: 32px 24px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border: 1px solid #E2E8F0;
         }
@@ -55,16 +62,16 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
             margin-bottom: 4px;
         }
         .logo {
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
         }
         .tagline {
             color: #64748B;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 400;
             text-align: center;
             margin-top: 4px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             letter-spacing: 0.3px;
         }
         .subtitle {
@@ -72,17 +79,17 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
             font-size: 16px;
             text-align: center;
             margin-top: 0;
-            margin-bottom: 32px;
+            margin-bottom: 24px;
         }
         .otp-box {
             background: #F8FAFC;
-            padding: 24px;
+            padding: 16px;
             text-align: center;
-            font-size: 42px;
+            font-size: 32px;
             font-weight: 700;
-            letter-spacing: 12px;
+            letter-spacing: 8px;
             border-radius: 12px;
-            margin: 24px 0;
+            margin: 20px 0;
             color: #1E293B;
             border: 1px solid #E2E8F0;
         }
@@ -94,11 +101,11 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
         .divider {
             border: none;
             border-top: 1px solid #E2E8F0;
-            margin: 32px 0 24px 0;
+            margin: 24px 0 20px 0;
         }
         .footer {
             color: #94A3B8;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
         }
         .highlight {
@@ -106,7 +113,7 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
         }
         .brand-tagline {
             color: #2DD4BF;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -122,6 +129,20 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
         }
         .mt-24 {
             margin-top: 24px;
+        }
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 16px;
+                border-radius: 12px;
+            }
+            .otp-box {
+                font-size: 28px;
+                padding: 12px;
+                letter-spacing: 6px;
+            }
+            .logo {
+                max-width: 120px;
+            }
         }
     </style>
 </head>
@@ -153,7 +174,7 @@ func (s *EmailService) SendOTP(data OTPEmailData) error {
         <div class="footer">
             <p class="brand-tagline">Flowing with You, Naturally</p>
             <p>Best regards,<br><strong style="color: #2DD4BF;">The Flownatty Team</strong></p>
-            <p style="font-size: 12px; color: #94A3B8; margin-top: 16px;">
+            <p style="font-size: 11px; color: #94A3B8; margin-top: 12px;">
                 Kenya's Social Commerce Super App
             </p>
         </div>
@@ -199,7 +220,7 @@ Kenya's Social Commerce Super App
 	return nil
 }
 
-func (s *EmailService) SendWelcome(data OTPEmailData) error {
+func (s *EmailService) SendWelcome(data WelcomeEmailData) error {
 	html := fmt.Sprintf(`
 <!DOCTYPE html>
 <html>
@@ -211,7 +232,7 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #F8FAFC;
-            padding: 40px;
+            padding: 20px;
             margin: 0;
         }
         .container {
@@ -219,7 +240,7 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
             margin: 0 auto;
             background-color: #FFFFFF;
             border-radius: 16px;
-            padding: 48px 40px;
+            padding: 32px 24px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border: 1px solid #E2E8F0;
         }
@@ -228,16 +249,16 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
             margin-bottom: 4px;
         }
         .logo {
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
         }
         .tagline {
             color: #64748B;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 400;
             text-align: center;
             margin-top: 4px;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
             letter-spacing: 0.3px;
         }
         .subtitle {
@@ -245,49 +266,53 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
             font-size: 16px;
             text-align: center;
             margin-top: 0;
-            margin-bottom: 32px;
+            margin-bottom: 8px;
         }
-        .card {
-            background: #F8FAFC;
-            border-radius: 12px;
-            padding: 32px;
-            margin: 24px 0;
-            border: 1px solid #E2E8F0;
+        .welcome-message {
+            margin-top: 8px;
         }
-        .card-title {
-            color: #1E293B;
-            font-size: 20px;
-            font-weight: 600;
-            margin-top: 0;
-            margin-bottom: 16px;
-        }
-        .card-text {
+        .welcome-message p {
             color: #1E293B;
             font-size: 16px;
-            line-height: 1.8;
-            margin: 0;
+            line-height: 1.7;
+            margin: 0 0 16px 0;
         }
-        .feature-list {
-            list-style: none;
-            padding: 0;
-            margin: 16px 0 0 0;
+        .feature-grid {
+            display: table;
+            width: 100%%;
+            margin: 16px 0 8px 0;
+            border-collapse: collapse;
         }
-        .feature-list li {
-            color: #1E293B;
-            font-size: 16px;
+        .feature-grid .feature-item {
+            display: table-row;
+        }
+        .feature-grid .feature-icon {
+            display: table-cell;
+            vertical-align: middle;
+            padding: 8px 12px 8px 0;
+            width: 24px;
+            color: #2DD4BF;
+            font-size: 18px;
+        }
+        .feature-grid .feature-text {
+            display: table-cell;
+            vertical-align: middle;
             padding: 8px 0;
-            padding-left: 28px;
-            background: url("data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%%232DD4BF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%%3E%%3Cpolyline points='20 6 9 17 4 12'%%3E%%3C/polyline%%3E%%3C/svg%%3E") left center no-repeat;
-            background-size: 20px;
+            color: #1E293B;
+            font-size: 15px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .feature-grid .feature-item:last-child .feature-text {
+            border-bottom: none;
         }
         .divider {
             border: none;
             border-top: 1px solid #E2E8F0;
-            margin: 32px 0 24px 0;
+            margin: 24px 0 20px 0;
         }
         .footer {
             color: #94A3B8;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
         }
         .highlight {
@@ -295,7 +320,7 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
         }
         .brand-tagline {
             color: #2DD4BF;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             letter-spacing: 1px;
             text-transform: uppercase;
@@ -309,11 +334,20 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
         .text-center {
             text-align: center;
         }
-        .mt-16 {
-            margin-top: 16px;
+        .mt-24 {
+            margin-top: 24px;
         }
-        .mb-8 {
-            margin-bottom: 8px;
+        @media (max-width: 480px) {
+            .container {
+                padding: 24px 16px;
+                border-radius: 12px;
+            }
+            .logo {
+                max-width: 120px;
+            }
+            .feature-grid .feature-text {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -324,20 +358,44 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
         </div>
 
         <p class="tagline">Flowing with You, Naturally</p>
-        <p class="subtitle">Welcome to Flownatty!</p>
+        <p class="subtitle">Welcome Aboard!</p>
 
-        <div class="card">
-            <h2 class="card-title">Welcome aboard, %s!</h2>
-            <p class="card-text">Your account has been successfully created.</p>
-            <p class="card-text" style="margin-top: 16px;">You can now:</p>
-            <ul class="feature-list">
-                <li>Discover local businesses</li>
-                <li>Shop products and services</li>
-                <li>Connect with businesses</li>
-                <li>Follow your favorite brands</li>
-            </ul>
-            <p class="card-text" style="margin-top: 16px;">
-                Start exploring the app today!
+        <div class="welcome-message">
+            <p class="text-primary" style="font-size: 16px;">Hi <strong>%s</strong>,</p>
+            <p class="text-primary" style="font-size: 16px; line-height: 1.7;">
+                We're thrilled to have you join the <span class="highlight">Flownatty</span> community.
+                Your account has been successfully created.
+            </p>
+
+            <p class="text-primary" style="font-size: 15px; font-weight: 600; margin-top: 20px;">
+                Here's what you can do:
+            </p>
+
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <span class="feature-icon">✦</span>
+                    <span class="feature-text">Discover local businesses near you</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✦</span>
+                    <span class="feature-text">Shop products and services effortlessly</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✦</span>
+                    <span class="feature-text">Connect directly with businesses</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✦</span>
+                    <span class="feature-text">Follow your favorite brands</span>
+                </div>
+                <div class="feature-item">
+                    <span class="feature-icon">✦</span>
+                    <span class="feature-text">Track orders and bookings</span>
+                </div>
+            </div>
+
+            <p class="text-primary" style="font-size: 16px; line-height: 1.7; margin-top: 20px;">
+                Start exploring the app today and experience commerce that flows naturally.
             </p>
         </div>
 
@@ -346,7 +404,7 @@ func (s *EmailService) SendWelcome(data OTPEmailData) error {
         <div class="footer">
             <p class="brand-tagline">Flowing with You, Naturally</p>
             <p>Best regards,<br><strong style="color: #2DD4BF;">The Flownatty Team</strong></p>
-            <p style="font-size: 12px; color: #94A3B8; margin-top: 16px;">
+            <p style="font-size: 11px; color: #94A3B8; margin-top: 12px;">
                 Kenya's Social Commerce Super App
             </p>
         </div>
@@ -360,15 +418,17 @@ Flowing with You, Naturally
 
 Hi %s,
 
+We're thrilled to have you join the Flownatty community.
 Your account has been successfully created.
 
-You can now:
-- Discover local businesses
-- Shop products and services
-- Connect with businesses
+Here's what you can do:
+- Discover local businesses near you
+- Shop products and services effortlessly
+- Connect directly with businesses
 - Follow your favorite brands
+- Track orders and bookings
 
-Start exploring the app today!
+Start exploring the app today and experience commerce that flows naturally.
 
 Best regards,
 The Flownatty Team

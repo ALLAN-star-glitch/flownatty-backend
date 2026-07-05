@@ -2,12 +2,12 @@ package auth
 
 import (
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/models"
 	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/email"
+	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/response"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -44,8 +44,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 	var req RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
+		response.BadRequest(c, "Invalid request", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
@@ -56,75 +56,81 @@ func (h *AuthHandler) Register(c *gin.Context) {
 
 	existingUser, _ := h.repo.GetUserByEmail(req.Email)
 	if existingUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Email already registered",
+		response.Conflict(c, "Email already registered", gin.H{
+			"field": "email",
+			"value": req.Email,
 		})
 		return
 	}
 
 	existingPhone, _ := h.repo.GetUserByPhone(req.Phone)
 	if existingPhone != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Phone number already registered",
+		response.Conflict(c, "Phone number already registered", gin.H{
+			"field": "phone",
+			"value": req.Phone,
 		})
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to process password",
+		response.InternalError(c, "Failed to process password", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// Generate random OTP (always random)
+	// Generate random OTP
 	otp := h.service.GenerateOTP()
 
 	log.Printf("Generated OTP for %s: %s", req.Email, otp)
 
-	otpRecord := &models.OTP{
-		PhoneNumber:  req.Phone,
-		Email:        req.Email,
-		OTPCode:      otp,
-		Name:         req.Name,
-		PasswordHash: string(hashedPassword),
-		Role:         req.Role,
-		Purpose:      "signup",
-		ExpiresAt:    time.Now().Add(5 * time.Minute),
-		IsUsed:       false,
-	}
-
-	if err := h.repo.SaveOTP(otpRecord); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to save OTP",
+	// Store OTP in Redis (primary)
+	if err := h.service.StoreOTP(req.Email, otp); err != nil {
+		log.Printf("Failed to store OTP in Redis: %v", err)
+		response.InternalError(c, "Failed to process request", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	// ✅ Always send OTP via email (both development and production)
-	if err := h.emailService.SendOTP(email.OTPEmailData{
-		To:      req.Email,
-		Name:    req.Name,
-		OTP:     otp,
-		Expires: "5 minutes",
-	}); err != nil {
-		log.Printf("Failed to send OTP email: %v", err)
+	// Store user data in Redis (with same TTL as OTP)
+	userData := map[string]interface{}{
+		"phone":    req.Phone,
+		"email":    req.Email,
+		"name":     req.Name,
+		"password": string(hashedPassword),
+		"role":     req.Role,
+	}
+	if err := h.service.StoreUserData(req.Email, userData); err != nil {
+		log.Printf("Failed to store user data in Redis: %v", err)
+		response.InternalError(c, "Failed to process request", gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
-	response := gin.H{
-		"message":    "OTP sent successfully",
+	// Enqueue OTP email via Asynq (non-blocking)
+	if err := h.service.EnqueueOTPEmail(req.Email, req.Name, otp); err != nil {
+		log.Printf("Failed to enqueue OTP email: %v", err)
+		// Fallback: send synchronously
+		if err := h.emailService.SendOTP(email.OTPEmailData{
+			To:      req.Email,
+			Name:    req.Name,
+			OTP:     otp,
+			Expires: "5 minutes",
+		}); err != nil {
+			log.Printf("Failed to send OTP email: %v", err)
+		}
+	}
+
+	respData := gin.H{
 		"email":      req.Email,
 		"phone":      req.Phone,
 		"expires_at": time.Now().Add(5 * time.Minute),
 	}
 
-	// ✅ Return OTP in development only (for testing)
-	if h.config.Environment == "development" {
-		response["otp"] = otp
-	}
-
-	c.JSON(http.StatusOK, response)
+	response.Success(c, "OTP sent successfully", respData)
 }
 
 // Verify OTP Request
@@ -133,144 +139,69 @@ type VerifyOTPRequest struct {
 	OTP   string `json:"otp" binding:"required,len=6"`
 }
 
-// Verify OTP Handler
-func (h *AuthHandler) VerifyOTP(c *gin.Context) {
-	var req VerifyOTPRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
+// Helper to create user from Redis data
+func (h *AuthHandler) createUserFromData(c *gin.Context, userEmail string, userData map[string]string) {
+	existingUser, _ := h.repo.GetUserByEmail(userEmail)
+	if existingUser != nil {
+		response.Conflict(c, "User already registered", gin.H{
+			"field": "email",
+			"value": userEmail,
 		})
 		return
 	}
 
-	// ✅ Allow 123456 as fallback (for development testing)
-	if req.OTP == "123456" {
-		// Find the OTP record by email only (not by code)
-		otpRecord, err := h.repo.GetLatestOTP(req.Email)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "No pending registration found",
-			})
-			return
-		}
-
-		if time.Now().After(otpRecord.ExpiresAt) {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"error": "OTP expired",
-			})
-			return
-		}
-
-		otpRecord.IsUsed = true
-		if err := h.repo.UpdateOTP(otpRecord); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to update OTP",
-			})
-			return
-		}
-
-		now := time.Now()
-		user := &models.User{
-			PhoneNumber:     otpRecord.PhoneNumber,
-			Email:           otpRecord.Email,
-			Password:        otpRecord.PasswordHash,
-			Name:            otpRecord.Name,
-			Role:            otpRecord.Role,
-			IsVerified:      true,
-			IsEmailVerified: false,
-			VerifiedAt:      &now,
-		}
-
-		if err := h.repo.CreateUser(user); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create user",
-			})
-			return
-		}
-
-		token, err := h.service.GenerateToken(user.ID.String())
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to generate token",
-			})
-			return
-		}
-
-		if err := h.emailService.SendWelcome(email.OTPEmailData{
-			To:   user.Email,
-			Name: user.Name,
-		}); err != nil {
-			log.Printf("Failed to send welcome email: %v", err)
-		}
-
-		c.JSON(http.StatusCreated, gin.H{
-			"message":      "Account created successfully",
-			"access_token": token,
-			"user": gin.H{
-				"id":    user.ID,
-				"phone": user.PhoneNumber,
-				"email": user.Email,
-				"name":  user.Name,
-				"role":  user.Role,
-			},
-		})
-		return
-	}
-
-	// Normal flow: verify with real OTP
-	otpRecord, err := h.repo.GetOTPByEmail(req.Email, req.OTP)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	otpRecord.IsUsed = true
-	if err := h.repo.UpdateOTP(otpRecord); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update OTP",
+	// Check if user already exists by phone
+	existingPhone, _ := h.repo.GetUserByPhone(userData["phone"])
+	if existingPhone != nil {
+		response.Conflict(c, "Phone number already registered", gin.H{
+			"field": "phone",
+			"value": userData["phone"],
 		})
 		return
 	}
 
 	now := time.Now()
 	user := &models.User{
-		PhoneNumber:     otpRecord.PhoneNumber,
-		Email:           otpRecord.Email,
-		Password:        otpRecord.PasswordHash,
-		Name:            otpRecord.Name,
-		Role:            otpRecord.Role,
+		PhoneNumber:     userData["phone"],
+		Email:           userData["email"],
+		Password:        userData["password"],
+		Name:            userData["name"],
+		Role:            userData["role"],
 		IsVerified:      true,
 		IsEmailVerified: false,
 		VerifiedAt:      &now,
+		LastActiveAt:    &now,
 	}
 
 	if err := h.repo.CreateUser(user); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create user",
+		log.Printf("Failed to create user: %v", err)
+		response.InternalError(c, "Failed to create user", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
 	token, err := h.service.GenerateToken(user.ID.String())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to generate token",
+		response.InternalError(c, "Failed to generate token", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
-	if err := h.emailService.SendWelcome(email.OTPEmailData{
-		To:   user.Email,
-		Name: user.Name,
-	}); err != nil {
-		log.Printf("Failed to send welcome email: %v", err)
+	// Enqueue Welcome Email
+	if err := h.service.EnqueueWelcomeEmail(user.Email, user.Name); err != nil {
+		log.Printf("Failed to enqueue welcome email: %v", err)
+		// Fallback: send synchronously
+		if err := h.emailService.SendWelcome(email.WelcomeEmailData{
+			To:   user.Email,
+			Name: user.Name,
+		}); err != nil {
+			log.Printf("Failed to send welcome email: %v", err)
+		}
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message":      "Account created successfully",
+	response.Created(c, "Account created successfully", gin.H{
 		"access_token": token,
 		"user": gin.H{
 			"id":    user.ID,
@@ -280,6 +211,59 @@ func (h *AuthHandler) VerifyOTP(c *gin.Context) {
 			"role":  user.Role,
 		},
 	})
+}
+
+// Verify OTP Handler
+func (h *AuthHandler) VerifyOTP(c *gin.Context) {
+	var req VerifyOTPRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request", gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	log.Printf("Verifying OTP for %s", req.Email)
+
+	// Check Redis for OTP
+	storedOTP, err := h.service.GetOTP(req.Email)
+
+	if err != nil {
+		// OTP not found in Redis - check if 123456 fallback is allowed
+		// In production, 123456 is NOT a valid OTP
+		response.BadRequest(c, "Invalid or expired OTP", gin.H{
+			"email": req.Email,
+		})
+		return
+	}
+
+	// Verify OTP
+	if req.OTP != storedOTP {
+		response.BadRequest(c, "Invalid OTP", gin.H{
+			"email":         req.Email,
+			"provided_otp": req.OTP,
+		})
+		return
+	}
+
+	log.Printf("OTP verified for %s", req.Email)
+
+	// Get user data from Redis
+	userData, err := h.service.GetUserData(req.Email)
+	if err != nil {
+		response.BadRequest(c, "Registration data not found. Please register again.", gin.H{
+			"email": req.Email,
+		})
+		return
+	}
+
+	// Delete OTP and user data from Redis
+	h.service.DeleteOTP(req.Email)
+	h.service.DeleteUserData(req.Email)
+
+	// Create user
+	h.createUserFromData(c, req.Email, userData)
 }
 
 // Resend OTP Request
@@ -292,24 +276,17 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 	var req ResendOTPRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
+		response.BadRequest(c, "Invalid request", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
 	existingUser, _ := h.repo.GetUserByEmail(req.Email)
 	if existingUser != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Email already registered",
-		})
-		return
-	}
-
-	otpRecord, err := h.repo.GetLatestOTP(req.Email)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "No pending registration found",
+		response.Conflict(c, "Email already registered", gin.H{
+			"field": "email",
+			"value": req.Email,
 		})
 		return
 	}
@@ -317,36 +294,38 @@ func (h *AuthHandler) ResendOTP(c *gin.Context) {
 	// Generate new random OTP
 	newOTP := h.service.GenerateOTP()
 
-	otpRecord.OTPCode = newOTP
-	otpRecord.ExpiresAt = time.Now().Add(5 * time.Minute)
-	otpRecord.IsUsed = false
-
-	if err := h.repo.UpdateOTP(otpRecord); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to resend OTP",
+	// Store new OTP in Redis
+	if err := h.service.StoreOTP(req.Email, newOTP); err != nil {
+		log.Printf("Failed to store OTP in Redis: %v", err)
+		response.InternalError(c, "Failed to resend OTP", gin.H{
+			"error": err.Error(),
 		})
 		return
 	}
 
+	// Refresh user data TTL in Redis
+	if err := h.service.StoreUserData(req.Email, map[string]interface{}{
+		"refresh": time.Now().Unix(),
+	}); err != nil {
+		log.Printf("Failed to refresh user data TTL: %v", err)
+	}
+
+	log.Printf("New OTP generated for %s: %s", req.Email, newOTP)
+
 	// Send new OTP via email
 	if err := h.emailService.SendOTP(email.OTPEmailData{
 		To:      req.Email,
-		Name:    "User", // We don't have the name here
+		Name:    "User",
 		OTP:     newOTP,
 		Expires: "5 minutes",
 	}); err != nil {
 		log.Printf("Failed to resend OTP email: %v", err)
 	}
 
-	response := gin.H{
-		"message":    "OTP resent successfully",
+	respData := gin.H{
 		"email":      req.Email,
 		"expires_at": time.Now().Add(5 * time.Minute),
 	}
 
-	if h.config.Environment == "development" {
-		response["otp"] = newOTP
-	}
-
-	c.JSON(http.StatusOK, response)
+	response.Success(c, "OTP resent successfully", respData)
 }
