@@ -9,30 +9,34 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// AuthMiddleware validates JWT and sets user context
+// AuthMiddleware validates JWT from cookie or Authorization header
 func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Get token from Authorization header
-		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Unauthorized(c, "Authorization header required", gin.H{
-				"reason": "missing Authorization header",
+		var tokenString string
+
+		// 1. Try to get token from cookie (preferred - more secure)
+		tokenCookie, err := c.Cookie("access_token")
+		if err == nil && tokenCookie != "" {
+			tokenString = tokenCookie
+		} else {
+			// 2. Fallback: Get token from Authorization header
+			authHeader := c.GetHeader("Authorization")
+			if authHeader != "" {
+				parts := strings.Split(authHeader, " ")
+				if len(parts) == 2 && parts[0] == "Bearer" {
+					tokenString = parts[1]
+				}
+			}
+		}
+
+		// 3. No token found
+		if tokenString == "" {
+			response.Unauthorized(c, "Authentication required", gin.H{
+				"reason": "no access token found in cookie or Authorization header",
 			})
 			c.Abort()
 			return
 		}
-
-		// Extract token (Bearer <token>)
-		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || parts[0] != "Bearer" {
-			response.Unauthorized(c, "Invalid authorization format", gin.H{
-				"format": "Bearer <token>",
-			})
-			c.Abort()
-			return
-		}
-
-		tokenString := parts[1]
 
 		// Parse and validate token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
@@ -55,6 +59,17 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			response.Unauthorized(c, "Invalid token claims", nil)
+			c.Abort()
+			return
+		}
+
+		// Check token type
+		tokenType, _ := claims["type"].(string)
+		if tokenType != "access" {
+			response.Unauthorized(c, "Invalid token type", gin.H{
+				"expected": "access",
+				"got":      tokenType,
+			})
 			c.Abort()
 			return
 		}

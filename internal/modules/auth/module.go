@@ -16,7 +16,7 @@ type AuthModule struct {
 	handler *AuthHandler
 }
 
-// Updated constructor to accept permissions service
+// NewAuthModule creates a new auth module with permissions and token services
 func NewAuthModule(cfg *config.Config, permService *permissions.Service) *AuthModule {
 	// Initialize Redis client
 	redisClient := redis.NewClient(&redis.Options{
@@ -38,23 +38,53 @@ func NewAuthModule(cfg *config.Config, permService *permissions.Service) *AuthMo
 	// Initialize repository
 	repo := NewAuthRepository(database.GetDB())
 
-	// Initialize service with Redis and queue
+	// Initialize auth service
 	authService := NewAuthService(repo, cfg, queueClient, redisClient)
 
-	// Initialize handler with permissions service
-	handler := NewAuthHandler(authService, repo, cfg, permService)
+	// Initialize token service
+	tokenService := NewTokenService(repo, cfg)
+
+	// Initialize handler with all dependencies
+	handler := NewAuthHandler(authService, repo, cfg, permService, tokenService)
 
 	return &AuthModule{
 		handler: handler,
 	}
 }
 
-func (m *AuthModule) RegisterRoutes(r *gin.RouterGroup) {
+// SetupRoutes registers all auth routes with the router
+func (m *AuthModule) SetupRoutes(r *gin.RouterGroup) {
 	auth := r.Group("/auth")
 	{
+		// ================================================
+		// REGISTRATION FLOW (Public)
+		// ================================================
 		auth.POST("/register", m.handler.Register)
 		auth.POST("/verify-otp", m.handler.VerifyOTP)
 		auth.POST("/resend-otp", m.handler.ResendOTP)
+
+		// ================================================
+		// AUTHENTICATION FLOW (Public)
+		// ================================================
+		auth.POST("/login", m.handler.Login)
+
+		// ================================================
+		// TOKEN MANAGEMENT (Public - Cookie Based)
+		// ================================================
+		auth.POST("/refresh", m.handler.RefreshToken)
+
+		// ================================================
+		// SESSION MANAGEMENT (Cookie Based)
+		// ================================================
+		auth.POST("/logout", m.handler.Logout)
+
+		// ================================================
+		// PASSWORD RESET FLOW (Public - OTP Based)
+		// ================================================
+		// Step 1: User enters email + new password → OTP sent
+		auth.POST("/forgot-password", m.handler.ForgotPassword)
+		// Step 2: User enters OTP → Password reset
+		auth.POST("/verify-reset-otp", m.handler.VerifyResetOTP)
 	}
 }
 

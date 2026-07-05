@@ -1,9 +1,104 @@
 basePath: /api/v1
 definitions:
+  auth.ForgotPasswordRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      new_password:
+        example: NewSecurePass456
+        minLength: 6
+        type: string
+    required:
+    - email
+    - new_password
+    type: object
+  auth.ForgotPasswordResponse:
+    properties:
+      expires_in:
+        example: 300
+        type: integer
+      message:
+        example: OTP sent to your email
+        type: string
+    type: object
+  auth.LoginRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      password:
+        example: SecurePass123
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  auth.LoginResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+      expires_in:
+        example: 86400
+        type: integer
+      refresh_token:
+        example: abc123xyz789...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        $ref: '#/definitions/auth.UserInfo'
+    type: object
+  auth.LogoutRequest:
+    properties:
+      refresh_token:
+        example: abc123xyz789...
+        type: string
+    type: object
+  auth.OTPResponse:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      expires_at:
+        example: "2026-07-06T17:40:00Z"
+        type: string
+      phone:
+        example: "+254712345678"
+        type: string
+      role:
+        example: consumer
+        type: string
+    type: object
+  auth.RefreshResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIs...
+        type: string
+      expires_in:
+        example: 86400
+        type: integer
+      refresh_token:
+        example: abc123xyz789...
+        type: string
+      token_type:
+        example: Bearer
+        type: string
+    type: object
+  auth.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        example: abc123xyz789...
+        type: string
+    required:
+    - refresh_token
+    type: object
   auth.RegisterRequest:
     properties:
       email:
-        example: user@example.com
+        example: john@example.com
         type: string
       name:
         example: John Doe
@@ -30,15 +125,59 @@ definitions:
   auth.ResendOTPRequest:
     properties:
       email:
-        example: user@example.com
+        example: john@example.com
         type: string
     required:
     - email
     type: object
+  auth.UserInfo:
+    properties:
+      avatar:
+        type: string
+      business_id:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      role:
+        type: string
+    type: object
+  auth.UserResponse:
+    properties:
+      expires_in:
+        example: 86400
+        type: integer
+      token_type:
+        example: Bearer
+        type: string
+      user:
+        properties:
+          email:
+            example: john@example.com
+            type: string
+          id:
+            example: 550e8400-e29b-41d4-a716-446655440000
+            type: string
+          name:
+            example: John Doe
+            type: string
+          phone:
+            example: "+254712345678"
+            type: string
+          role:
+            example: consumer
+            type: string
+        type: object
+    type: object
   auth.VerifyOTPRequest:
     properties:
       email:
-        example: user@example.com
+        example: john@example.com
         type: string
       otp:
         example: "123456"
@@ -46,6 +185,55 @@ definitions:
     required:
     - email
     - otp
+    type: object
+  auth.VerifyResetOTPRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  auth.VerifyResetOTPResponse:
+    properties:
+      message:
+        example: Password reset successfully
+        type: string
+    type: object
+  response.BaseResponse:
+    properties:
+      code:
+        type: integer
+      data: {}
+      error:
+        $ref: '#/definitions/response.ErrorPayload'
+      message:
+        type: string
+      pagination:
+        $ref: '#/definitions/response.PaginationMeta'
+      success:
+        type: boolean
+    type: object
+  response.ErrorPayload:
+    properties:
+      code:
+        type: integer
+      details: {}
+    type: object
+  response.PaginationMeta:
+    properties:
+      hasMore:
+        type: boolean
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -61,6 +249,152 @@ info:
   title: Flownatty Backend API
   version: "1.0"
 paths:
+  /auth/forgot-password:
+    post:
+      consumes:
+      - application/json
+      description: Send OTP to user's email for password reset
+      parameters:
+      - description: Email and new password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.ForgotPasswordResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Forgot password - Step 1
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 'Authenticate user. For web: tokens set in cookies. For mobile:
+        tokens returned in response body.'
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.LoginResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: 'Revoke refresh token. For web: uses cookie. For mobile: send refresh_token
+        in body.'
+      parameters:
+      - description: Refresh token (required for mobile, optional for web)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Logout user
+      tags:
+      - Auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: 'Get a new access token. For web: uses refresh token from cookie.
+        For mobile: send refresh_token in body.'
+      parameters:
+      - description: Refresh token (required for mobile, optional for web)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.RefreshResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Refresh access token
+      tags:
+      - Auth
   /auth/register:
     post:
       consumes:
@@ -78,20 +412,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OTP sent successfully
+          description: OK
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.OTPResponse'
+              type: object
         "400":
-          description: Invalid request
+          description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
         "500":
-          description: Server error
+          description: Internal Server Error
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
       summary: Register a new user
       tags:
       - Auth
@@ -111,20 +451,26 @@ paths:
       - application/json
       responses:
         "200":
-          description: OTP resent successfully
+          description: OK
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.OTPResponse'
+              type: object
         "400":
-          description: Invalid request
+          description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
         "500":
-          description: Server error
+          description: Internal Server Error
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
       summary: Resend OTP
       tags:
       - Auth
@@ -144,21 +490,66 @@ paths:
       - application/json
       responses:
         "201":
-          description: Account created successfully
+          description: Created
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.UserResponse'
+              type: object
         "400":
-          description: Invalid OTP
+          description: Bad Request
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
         "500":
-          description: Server error
+          description: Internal Server Error
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.BaseResponse'
       summary: Verify OTP and create account
+      tags:
+      - Auth
+  /auth/verify-reset-otp:
+    post:
+      consumes:
+      - application/json
+      description: Verify OTP and reset password
+      parameters:
+      - description: OTP verification details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/auth.VerifyResetOTPRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/auth.VerifyResetOTPResponse'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Verify reset OTP - Step 2
       tags:
       - Auth
 swagger: "2.0"

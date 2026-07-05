@@ -36,7 +36,10 @@ func main() {
     
     //  Register handlers
     mux.HandleFunc(auth.TypeEmailOTP, emailWorker.HandleOTPEmail)
-    mux.HandleFunc(auth.TypeEmailWelcome, emailWorker.HandleWelcomeEmail)  
+    mux.HandleFunc(auth.TypeEmailWelcome, emailWorker.HandleWelcomeEmail)
+    mux.HandleFunc(auth.TypeEmailPasswordResetOTP, emailWorker.HandlePasswordResetOTP)
+    mux.HandleFunc(auth.TypeEmailLoginNotification, emailWorker.HandleLoginNotification)
+    mux.HandleFunc(auth.TypeEmailPasswordResetConfirm, emailWorker.HandlePasswordResetConfirm) 
 
     go func() {
         if err := srv.Run(mux); err != nil {

@@ -64,8 +64,8 @@ type DatabaseConfig struct {
 // JWTConfig defines JWT configuration
 type JWTConfig struct {
 	Secret            string
-	Expiration        time.Duration
-	RefreshExpiration time.Duration
+	Expiration        time.Duration // Access token expiration time - 24 hours
+	RefreshExpiration time.Duration // Refresh token expiration time - 7 days
 }
 
 // EmailConfig defines email configuration

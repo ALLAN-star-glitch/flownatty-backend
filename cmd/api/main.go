@@ -75,7 +75,7 @@ func main() {
 	// ================================================
 	// 4. Public Routes (No Auth Required)
 	// ================================================
-	authModule.RegisterRoutes(v1)
+	authModule.SetupRoutes(v1)
 
 	// ================================================
 	// 5. Protected Routes (Auth + Authorization)
