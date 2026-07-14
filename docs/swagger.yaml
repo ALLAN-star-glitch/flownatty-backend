@@ -235,6 +235,19 @@ definitions:
     required:
     - role
     type: object
+  handler.UpdateUserRoleRequest:
+    properties:
+      role:
+        enum:
+        - consumer
+        - business_owner
+        - admin
+        - super_admin
+        example: business_owner
+        type: string
+    required:
+    - role
+    type: object
   handler.UserResponse:
     properties:
       expires_in:
@@ -565,6 +578,8 @@ definitions:
         type: string
       id:
         type: string
+      is_active:
+        type: boolean
       is_email_verified:
         type: boolean
       is_verified:
@@ -699,9 +714,248 @@ paths:
       summary: Get all users
       tags:
       - User Management
+  /api/v1/admin/users/{id}:
+    delete:
+      description: Soft delete a user (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete user (soft delete)
+      tags:
+      - User Management
+    get:
+      description: Get a specific user by ID (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.User'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get user by ID
+      tags:
+      - User Management
+  /api/v1/admin/users/{id}/activate:
+    put:
+      description: Activate a suspended user account (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Activate user
+      tags:
+      - User Management
+  /api/v1/admin/users/{id}/hard:
+    delete:
+      description: Permanently delete a user and all related data (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Permanently delete user
+      tags:
+      - User Management
+  /api/v1/admin/users/{id}/role:
+    put:
+      consumes:
+      - application/json
+      description: Update a user's role (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: New role
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handler.UpdateUserRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Update user role
+      tags:
+      - User Management
+  /api/v1/admin/users/{id}/suspend:
+    put:
+      description: Suspend a user account (Admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Suspend user
+      tags:
+      - User Management
   /api/v1/admin/users/stats:
     get:
-      description: Get statistics about users (total, consumers, business owners)
+      description: Get statistics about users (total, consumers, business owners,
+        admins)
       produces:
       - application/json
       responses:

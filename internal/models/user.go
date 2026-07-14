@@ -19,6 +19,7 @@ type User struct {
 	Role              string     `gorm:"default:consumer" json:"role"`
 	IsVerified        bool       `gorm:"default:true" json:"is_verified"`
 	IsEmailVerified   bool       `gorm:"default:true" json:"is_email_verified"`
+    IsActive          bool       `gorm:"default:true" json:"is_active"`
 	VerifiedAt        *time.Time `json:"verified_at"`
 	EmailVerifiedAt   *time.Time `json:"email_verified_at"`
 	LastLoginAt       *time.Time `json:"last_login_at"`
