@@ -1,4 +1,4 @@
-package auth
+package background
 
 import (
     "encoding/json"
@@ -10,6 +10,11 @@ const (
     TypeEmailPasswordResetOTP      = "email:password_reset_otp"
     TypeEmailLoginNotification     = "email:login_notification"
     TypeEmailPasswordResetConfirm  = "email:password_reset_confirm"
+    TypeEmailTwoFactorOTP          = "email:two_factor_otp"
+    
+    // Business email tasks (NEW)
+    TypeEmailBusinessOTP           = "email:business_otp"
+    TypeEmailBusinessWelcome       = "email:business_welcome"
 )
 
 // ================================================
@@ -39,6 +44,37 @@ type WelcomeEmailTask struct {
 }
 
 func (t WelcomeEmailTask) Payload() ([]byte, error) {
+    return json.Marshal(t)
+}
+
+// ================================================
+// BUSINESS OTP EMAIL TASK (NEW)
+// ================================================
+
+// BusinessOTPEmailTask - for business email verification
+type BusinessOTPEmailTask struct {
+    To           string `json:"to"`
+    BusinessName string `json:"business_name"`
+    OTP          string `json:"otp"`
+    Expires      string `json:"expires"`
+}
+
+func (t BusinessOTPEmailTask) Payload() ([]byte, error) {
+    return json.Marshal(t)
+}
+
+// ================================================
+// BUSINESS WELCOME EMAIL TASK (NEW)
+// ================================================
+
+// BusinessWelcomeEmailTask - for business welcome email
+type BusinessWelcomeEmailTask struct {
+    To           string `json:"to"`
+    BusinessName string `json:"business_name"`
+    OwnerName    string `json:"owner_name"`
+}
+
+func (t BusinessWelcomeEmailTask) Payload() ([]byte, error) {
     return json.Marshal(t)
 }
 
@@ -86,5 +122,21 @@ type PasswordResetConfirmTask struct {
 }
 
 func (t PasswordResetConfirmTask) Payload() ([]byte, error) {
+    return json.Marshal(t)
+}
+
+// ================================================
+// TWO-FACTOR OTP EMAIL TASK
+// ================================================
+
+// TwoFactorOTPTask - matches email.OTPEmailData
+type TwoFactorOTPTask struct {
+    To      string `json:"to"`
+    Name    string `json:"name"`
+    OTP     string `json:"otp"`
+    Expires string `json:"expires"`
+}
+
+func (t TwoFactorOTPTask) Payload() ([]byte, error) {
     return json.Marshal(t)
 }

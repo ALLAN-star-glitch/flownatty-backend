@@ -16,9 +16,9 @@ var DB *gorm.DB
 
 // Connect initializes the database connection and returns the *gorm.DB instance
 func Connect(cfg *config.Config) (*gorm.DB, error) {
-	// Add statement_cache_mode=disable to fix prepared statement errors
+	// Simplified DSN - only use valid PostgreSQL parameters
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC&statement_cache_mode=disable",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
 		cfg.Database.Host,
 		cfg.Database.User,
 		cfg.Database.Password,
@@ -33,7 +33,6 @@ func Connect(cfg *config.Config) (*gorm.DB, error) {
 		NowFunc: func() time.Time {
 			return time.Now().UTC()
 		},
-		// Disable prepared statements to avoid cache errors
 		PrepareStmt: false,
 	})
 	if err != nil {

@@ -3,7 +3,7 @@ package middleware
 import (
 	"strings"
 
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/auth/permissions"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/permissions"
 	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/response"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -38,14 +38,22 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 			return
 		}
 
-		// Parse and validate token
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Validate signing method
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, jwt.ErrSignatureInvalid
-			}
-			return []byte(jwtSecret), nil
-		})
+		// Parse and validate token - with explicit algorithm validation
+        token, err := jwt.Parse(tokenString,
+            func(token *jwt.Token) (interface{}, error) {
+                return []byte(jwtSecret), nil
+            },
+            jwt.WithValidMethods([]string{"HS256", "HS384", "HS512"}),
+        )
+
+        if err != nil || !token.Valid {
+            response.Unauthorized(c, "Invalid or expired token", gin.H{
+                "error": err.Error(),
+            })
+            c.Abort()
+            return
+        }
+
 
 		if err != nil || !token.Valid {
 			response.Unauthorized(c, "Invalid or expired token", gin.H{

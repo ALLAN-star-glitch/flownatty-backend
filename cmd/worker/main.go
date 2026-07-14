@@ -1,58 +1,69 @@
 package main
 
 import (
-    "log"
-    "os"
-    "os/signal"
-    "syscall"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 
-    "github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
-    "github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/auth"
-    "github.com/ALLAN-star-glitch/flownatty-backend/pkg/email"
-    "github.com/hibiken/asynq"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/authentication/background"
+	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/email"
+	"github.com/ALLAN-star-glitch/flownatty-backend/pkg/redis"
+	"github.com/hibiken/asynq"
 )
 
 func main() {
-    cfg := config.Load()
+	cfg := config.Load()
 
-    emailService := email.NewEmailService(cfg.Resend.ApiKey, cfg.Resend.From)
-    emailWorker := auth.NewEmailWorker(emailService)
+	// ================================================
+	// Initialize Redis (Global)
+	// ================================================
+	if err := redis.Init(cfg.Redis.URL); err != nil {
+		log.Fatalf("Failed to initialize Redis: %v", err)
+	}
+	log.Println("Redis initialized successfully")
 
+	emailService := email.NewEmailService(cfg.Resend.ApiKey, cfg.Resend.From)
+	emailWorker := background.NewEmailWorker(emailService)
 
-	//  Create Asynq server
-    srv := asynq.NewServer(
-        asynq.RedisClientOpt{Addr: cfg.Redis.URL},
-        asynq.Config{
-            Concurrency: 5,
-            Queues: map[string]int{
-                "critical": 6,
-                "default":  3,
-                "low":      1,
-            },
-        },
-    )
+	// Create Asynq server
+	srv := asynq.NewServer(
+		asynq.RedisClientOpt{Addr: cfg.Redis.URL},
+		asynq.Config{
+			Concurrency: 5,
+			Queues: map[string]int{
+				"critical": 6,
+				"default":  3,
+				"low":      1,
+			},
+		},
+	)
 
-    mux := asynq.NewServeMux()
-    
-    //  Register handlers
-    mux.HandleFunc(auth.TypeEmailOTP, emailWorker.HandleOTPEmail)
-    mux.HandleFunc(auth.TypeEmailWelcome, emailWorker.HandleWelcomeEmail)
-    mux.HandleFunc(auth.TypeEmailPasswordResetOTP, emailWorker.HandlePasswordResetOTP)
-    mux.HandleFunc(auth.TypeEmailLoginNotification, emailWorker.HandleLoginNotification)
-    mux.HandleFunc(auth.TypeEmailPasswordResetConfirm, emailWorker.HandlePasswordResetConfirm) 
+	mux := asynq.NewServeMux()
 
-    go func() {
-        if err := srv.Run(mux); err != nil {
-            log.Fatalf("Worker failed: %v", err)
-        }
-    }()
+	// Register handlers
+	mux.HandleFunc(background.TypeEmailOTP, emailWorker.HandleOTPEmail)
+	mux.HandleFunc(background.TypeEmailWelcome, emailWorker.HandleWelcomeEmail)
+	mux.HandleFunc(background.TypeEmailBusinessOTP, emailWorker.HandleBusinessOTPEmail)
+	mux.HandleFunc(background.TypeEmailBusinessWelcome, emailWorker.HandleBusinessWelcomeEmail)
+	mux.HandleFunc(background.TypeEmailPasswordResetOTP, emailWorker.HandlePasswordResetOTP)
+	mux.HandleFunc(background.TypeEmailLoginNotification, emailWorker.HandleLoginNotification)
+	mux.HandleFunc(background.TypeEmailPasswordResetConfirm, emailWorker.HandlePasswordResetConfirm)
+	mux.HandleFunc(background.TypeEmailTwoFactorOTP, emailWorker.HandleTwoFactorOTP)
 
-    log.Println("Asynq worker started. Press Ctrl+C to stop.")
+	go func() {
+		if err := srv.Run(mux); err != nil {
+			log.Fatalf("Worker failed: %v", err)
+		}
+	}()
 
-    quit := make(chan os.Signal, 1)
-    signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-    <-quit
+	log.Println("Asynq worker started. Press Ctrl+C to stop.")
 
-    log.Println("Shutting down worker...")
-    srv.Shutdown()
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down worker...")
+	srv.Shutdown()
 }

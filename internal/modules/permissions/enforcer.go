@@ -36,7 +36,7 @@ var (
 // Enforcer wraps the Casbin enforcer with additional functionality - singleton pattern, auto-reload, and thread safety
 type Enforcer struct {
 	*casbin.Enforcer
-	mu      sync.RWMutex
+	mu      sync.RWMutex 
 	cfg     *config.CasbinConfig
 	db      *gorm.DB
 	ctx     context.Context

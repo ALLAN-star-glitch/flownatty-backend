@@ -1,4 +1,4 @@
-package auth
+package authrepo
 
 import (
     "errors"
@@ -29,7 +29,8 @@ func (r *AuthRepository) CreateUser(user *models.User) error {
 // GetUserByEmail finds a user by email
 func (r *AuthRepository) GetUserByEmail(email string) (*models.User, error) {
     var user models.User
-    err := r.db.Where("email = ?", email).First(&user).Error
+    err := r.db.Preload("BusinessMembers").Preload("BusinessMembers.Business").
+        Where("email = ?", email).First(&user).Error
     if err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
             return nil, nil
@@ -42,7 +43,8 @@ func (r *AuthRepository) GetUserByEmail(email string) (*models.User, error) {
 // GetUserByPhone finds a user by phone number
 func (r *AuthRepository) GetUserByPhone(phone string) (*models.User, error) {
     var user models.User
-    err := r.db.Where("phone_number = ?", phone).First(&user).Error
+    err := r.db.Preload("BusinessMembers").Preload("BusinessMembers.Business").
+        Where("phone_number = ?", phone).First(&user).Error
     if err != nil {
         if errors.Is(err, gorm.ErrRecordNotFound) {
             return nil, nil
@@ -55,8 +57,23 @@ func (r *AuthRepository) GetUserByPhone(phone string) (*models.User, error) {
 // GetUserByID finds a user by ID
 func (r *AuthRepository) GetUserByID(id string) (*models.User, error) {
     var user models.User
-    err := r.db.Where("id = ?", id).First(&user).Error
+    err := r.db.Preload("BusinessMembers").Preload("BusinessMembers.Business").
+        Where("id = ?", id).First(&user).Error
     if err != nil {
+        return nil, err
+    }
+    return &user, nil
+}
+
+// GetUserByIDWithBusiness gets a user with their business memberships loaded
+func (r *AuthRepository) GetUserByIDWithBusiness(id uuid.UUID) (*models.User, error) {
+    var user models.User
+    err := r.db.Preload("BusinessMembers").Preload("BusinessMembers.Business").
+        Where("id = ?", id).First(&user).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
         return nil, err
     }
     return &user, nil
@@ -65,6 +82,49 @@ func (r *AuthRepository) GetUserByID(id string) (*models.User, error) {
 // UpdateUser updates an existing user
 func (r *AuthRepository) UpdateUser(user *models.User) error {
     return r.db.Save(user).Error
+}
+
+// ================================================
+// BUSINESS OPERATIONS (Basic CRUD for Auth)
+// ================================================
+
+// CreateBusiness creates a new business
+func (r *AuthRepository) CreateBusiness(business *models.Business) error {
+    return r.db.Create(business).Error
+}
+
+// GetBusinessByID gets a business by ID
+func (r *AuthRepository) GetBusinessByID(id uuid.UUID) (*models.Business, error) {
+    var business models.Business
+    err := r.db.Where("id = ? AND is_active = ?", id, true).First(&business).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    return &business, nil
+}
+
+// GetBusinessByUserID gets a business by user ID (first business user is member of)
+// Deprecated: Use BusinessMemberRepository.GetMembersByUser instead
+func (r *AuthRepository) GetBusinessByUserID(userID uuid.UUID) (*models.Business, error) {
+    var member models.BusinessMember
+    err := r.db.Preload("Business").
+        Where("user_id = ? AND is_active = ?", userID, true).
+        First(&member).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    return &member.Business, nil
+}
+
+// UpdateBusiness updates a business
+func (r *AuthRepository) UpdateBusiness(business *models.Business) error {
+    return r.db.Save(business).Error
 }
 
 // ================================================
@@ -172,27 +232,6 @@ func (r *AuthRepository) CleanupRevokedRefreshTokens(olderThan time.Time) error 
 }
 
 // ================================================
-// BUSINESS OPERATIONS
-// ================================================
-
-// UpdateUserBusinessID updates a user's business ID
-func (r *AuthRepository) UpdateUserBusinessID(userID uuid.UUID, businessID uuid.UUID) error {
-    return r.db.Model(&models.User{}).
-        Where("id = ?", userID).
-        Update("business_id", businessID).Error
-}
-
-// GetUserWithBusiness gets a user with their business loaded
-func (r *AuthRepository) GetUserWithBusiness(userID string) (*models.User, error) {
-    var user models.User
-    err := r.db.Preload("Business").Where("id = ?", userID).First(&user).Error
-    if err != nil {
-        return nil, err
-    }
-    return &user, nil
-}
-
-// ================================================
 // UTILITY OPERATIONS
 // ================================================
 
@@ -214,4 +253,95 @@ func (r *AuthRepository) UserExistsByPhone(phone string) (bool, error) {
         return false, err
     }
     return count > 0, nil
+}
+
+// ================================================
+// ADMIN OPERATIONS
+// ================================================
+
+// GetAllUsers gets all users with pagination
+func (r *AuthRepository) GetAllUsers(limit, offset int, search string) ([]models.User, int64, error) {
+    var users []models.User
+    var total int64
+
+    db := r.db.Model(&models.User{})
+
+    // Apply search filter if provided
+    if search != "" {
+        db = db.Where("email ILIKE ? OR name ILIKE ? OR phone_number ILIKE ?", 
+            "%"+search+"%", "%"+search+"%", "%"+search+"%")
+    }
+
+    // Count total
+    if err := db.Count(&total).Error; err != nil {
+        return nil, 0, err
+    }
+
+    // Get paginated results
+    err := db.Preload("BusinessMembers").Preload("BusinessMembers.Business").
+        Order("created_at DESC").
+        Limit(limit).
+        Offset(offset).
+        Find(&users).Error
+
+    return users, total, err
+}
+
+// GetUserStats gets user statistics
+func (r *AuthRepository) GetUserStats() (map[string]interface{}, error) {
+    var totalUsers int64
+    var totalConsumers int64
+    var totalBusinessOwners int64
+
+    // Total users
+    if err := r.db.Model(&models.User{}).Count(&totalUsers).Error; err != nil {
+        return nil, err
+    }
+
+    // Total consumers
+    if err := r.db.Model(&models.User{}).Where("role = ?", "consumer").Count(&totalConsumers).Error; err != nil {
+        return nil, err
+    }
+
+    // Total business owners
+    if err := r.db.Model(&models.User{}).Where("role = ?", "business_owner").Count(&totalBusinessOwners).Error; err != nil {
+        return nil, err
+    }
+
+    stats := map[string]interface{}{
+        "total_users":         totalUsers,
+        "total_consumers":     totalConsumers,
+        "total_business_owners": totalBusinessOwners,
+    }
+
+    return stats, nil
+}
+
+// ================================================
+// BUSINESS MEMBER OPERATIONS (Basic CRUD for Auth)
+// ================================================
+
+// CreateBusinessMember creates a new business member
+func (r *AuthRepository) CreateBusinessMember(member *models.BusinessMember) error {
+    return r.db.Create(member).Error
+}
+
+// GetBusinessMemberByUserAndBusiness gets a business member by user and business
+func (r *AuthRepository) GetBusinessMemberByUserAndBusiness(userID, businessID uuid.UUID) (*models.BusinessMember, error) {
+    var member models.BusinessMember
+    err := r.db.Where("user_id = ? AND business_id = ? AND is_active = ?", userID, businessID, true).
+        First(&member).Error
+    if err != nil {
+        if errors.Is(err, gorm.ErrRecordNotFound) {
+            return nil, nil
+        }
+        return nil, err
+    }
+    return &member, nil
+}
+
+// DeleteBusinessMember deletes a business member
+func (r *AuthRepository) DeleteBusinessMember(userID, businessID uuid.UUID) error {
+    return r.db.Where("user_id = ? AND business_id = ?", userID, businessID).
+        Delete(&models.BusinessMember{}).Error
 }

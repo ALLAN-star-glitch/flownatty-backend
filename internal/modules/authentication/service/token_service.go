@@ -1,4 +1,4 @@
-package auth
+package service
 
 import (
 	"crypto/rand"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/models"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/authentication/authrepo"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -16,12 +17,12 @@ import (
 
 // TokenService handles all token generation and management
 type TokenService struct {
-	repo   *AuthRepository
+	repo   *authrepo.AuthRepository
 	config *config.Config
 }
 
 // NewTokenService creates a new token service instance
-func NewTokenService(repo *AuthRepository, cfg *config.Config) *TokenService {
+func NewTokenService(repo *authrepo.AuthRepository, cfg *config.Config) *TokenService {
 	return &TokenService{
 		repo:   repo,
 		config: cfg,

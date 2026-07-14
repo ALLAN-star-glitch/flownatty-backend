@@ -1,4 +1,4 @@
-package auth
+package background
 
 import (
     "context"
@@ -20,7 +20,7 @@ func NewEmailWorker(emailService *email.EmailService) *EmailWorker {
 }
 
 // ================================================
-// HANDLE OTP EMAIL
+// HANDLE OTP EMAIL - Registration
 // ================================================
 
 // HandleOTPEmail handles registration OTP email
@@ -33,12 +33,7 @@ func (w *EmailWorker) HandleOTPEmail(ctx context.Context, task *asynq.Task) erro
 
     log.Printf("Processing OTP email for %s", data.To)
 
-    err := w.emailService.SendOTP(email.OTPEmailData{
-        To:      data.To,
-        Name:    data.Name,
-        OTP:     data.OTP,
-        Expires: data.Expires,
-    })
+    err := w.emailService.SendSignupOTP(data.To, data.Name, data.OTP, data.Expires)
 
     if err != nil {
         log.Printf("Failed to send OTP email to %s: %v", data.To, err)
@@ -78,6 +73,60 @@ func (w *EmailWorker) HandleWelcomeEmail(ctx context.Context, task *asynq.Task) 
 }
 
 // ================================================
+// HANDLE BUSINESS OTP EMAIL (NEW)
+// ================================================
+
+// HandleBusinessOTPEmail handles business OTP email
+func (w *EmailWorker) HandleBusinessOTPEmail(ctx context.Context, task *asynq.Task) error {
+    var data BusinessOTPEmailTask
+    if err := json.Unmarshal(task.Payload(), &data); err != nil {
+        log.Printf("Failed to parse business OTP email task: %v", err)
+        return err
+    }
+
+    log.Printf("Processing business OTP email for %s", data.To)
+
+    err := w.emailService.SendBusinessOTP(data.To, data.BusinessName, data.OTP, data.Expires)
+
+    if err != nil {
+        log.Printf("Failed to send business OTP email to %s: %v", data.To, err)
+        return err
+    }
+
+    log.Printf("Business OTP email sent to %s", data.To)
+    return nil
+}
+
+// ================================================
+// HANDLE BUSINESS WELCOME EMAIL (NEW)
+// ================================================
+
+// HandleBusinessWelcomeEmail handles business welcome email
+func (w *EmailWorker) HandleBusinessWelcomeEmail(ctx context.Context, task *asynq.Task) error {
+    var data BusinessWelcomeEmailTask
+    if err := json.Unmarshal(task.Payload(), &data); err != nil {
+        log.Printf("Failed to parse business welcome email task: %v", err)
+        return err
+    }
+
+    log.Printf("Processing business welcome email for %s", data.To)
+
+    err := w.emailService.SendBusinessWelcome(email.BusinessWelcomeData{
+        To:           data.To,
+        BusinessName: data.BusinessName,
+        OwnerName:    data.OwnerName,
+    })
+
+    if err != nil {
+        log.Printf("Failed to send business welcome email to %s: %v", data.To, err)
+        return err
+    }
+
+    log.Printf("Business welcome email sent to %s", data.To)
+    return nil
+}
+
+// ================================================
 // HANDLE PASSWORD RESET OTP EMAIL
 // ================================================
 
@@ -91,12 +140,7 @@ func (w *EmailWorker) HandlePasswordResetOTP(ctx context.Context, task *asynq.Ta
 
     log.Printf("Processing password reset OTP for %s", data.To)
 
-    err := w.emailService.SendPasswordResetOTP(email.PasswordResetOTPData{
-        To:      data.To,
-        Name:    data.Name,
-        OTP:     data.OTP,
-        Expires: data.Expires,
-    })
+    err := w.emailService.SendPasswordResetOTP(data.To, data.Name, data.OTP, data.Expires)
 
     if err != nil {
         log.Printf("Failed to send password reset OTP to %s: %v", data.To, err)
@@ -163,5 +207,30 @@ func (w *EmailWorker) HandlePasswordResetConfirm(ctx context.Context, task *asyn
     }
 
     log.Printf("Password reset confirmation sent to %s", data.To)
+    return nil
+}
+
+// ================================================
+// HANDLE TWO-FACTOR OTP EMAIL
+// ================================================
+
+// HandleTwoFactorOTP handles 2FA OTP email
+func (w *EmailWorker) HandleTwoFactorOTP(ctx context.Context, task *asynq.Task) error {
+    var data TwoFactorOTPTask
+    if err := json.Unmarshal(task.Payload(), &data); err != nil {
+        log.Printf("Failed to parse 2FA OTP task: %v", err)
+        return err
+    }
+
+    log.Printf("Processing 2FA OTP email for %s", data.To)
+
+    err := w.emailService.SendTwoFactorOTP(data.To, data.Name, data.OTP, data.Expires)
+
+    if err != nil {
+        log.Printf("Failed to send 2FA OTP to %s: %v", data.To, err)
+        return err
+    }
+
+    log.Printf("2FA OTP email sent to %s", data.To)
     return nil
 }
