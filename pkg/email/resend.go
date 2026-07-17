@@ -409,7 +409,7 @@ Kenya's Social Commerce Super App
 func (s *EmailService) SendBusinessOTP(to, businessName, otp, expires string) error {
 	data := BusinessOTPEmailData{
 		To:           to,
-		Name:         to, // Use email as name if not provided
+		Name:         businessName, 
 		BusinessName: businessName,
 		OTP:          otp,
 		Expires:      expires,

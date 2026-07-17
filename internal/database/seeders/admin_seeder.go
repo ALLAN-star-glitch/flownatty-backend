@@ -1,3 +1,4 @@
+// internal/database/seeders/admin_seeder.go
 package seeders
 
 import (
@@ -11,23 +12,13 @@ import (
 )
 
 func SeedAdmin(db *gorm.DB) error {
-	// Check if admin already exists
-	var count int64
-	db.Model(&models.User{}).Where("email = ?", "allanmathenge22@gmail.com").Count(&count)
-	if count > 0 {
-		log.Println("Admin user already exists")
-		return nil
-	}
-
-	// Hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte("Admin@123"), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	// Create admin user with known UUID
-	adminID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 	now := time.Now()
+	adminID := uuid.MustParse("550e8400-e29b-41d4-a716-446655440000")
 
 	admin := &models.User{
 		BaseModel: models.BaseModel{
@@ -46,19 +37,30 @@ func SeedAdmin(db *gorm.DB) error {
 		TwoFactorEnabled: true,
 	}
 
-	if err := db.Create(admin).Error; err != nil {
+	// Use FirstOrCreate - find by email, create if not exists
+	if err := db.Where(models.User{Email: admin.Email}).FirstOrCreate(admin).Error; err != nil {
 		return err
 	}
 
-	// Assign admin role in Casbin
-	if err := db.Exec(`
-		INSERT INTO casbin_rule (ptype, v0, v1, v2) 
-		VALUES (?, ?, ?, ?)`,
-		"g", admin.ID.String(), "super_admin", "platform",
-	).Error; err != nil {
-		return err
+	// Assign admin role in Casbin (idempotent - only if not exists)
+	var count int64
+	db.Table("casbin_rule").
+		Where("ptype = ? AND v0 = ? AND v1 = ? AND v2 = ?", 
+			"g", admin.ID.String(), "super_admin", "platform").
+		Count(&count)
+	
+	if count == 0 {
+		if err := db.Exec(`
+			INSERT INTO casbin_rule (ptype, v0, v1, v2) 
+			VALUES (?, ?, ?, ?)`,
+			"g", admin.ID.String(), "super_admin", "platform",
+		).Error; err != nil {
+			return err
+		}
+		log.Printf("✅ Admin user created: %s (ID: %s)", admin.Email, admin.ID)
+	} else {
+		log.Printf("✅ Admin user already exists: %s", admin.Email)
 	}
 
-	log.Printf("Admin user created: %s (ID: %s)", admin.Email, admin.ID)
 	return nil
 }

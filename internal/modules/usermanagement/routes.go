@@ -1,13 +1,13 @@
 package usermanagement
 
 import (
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/handler"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/userhandler"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterUserManagementRoutes(
     router *gin.RouterGroup,
-    userHandler *handler.UserHandler,
+    userHandler *userhandler.UserHandler,
 ) {
     users := router.Group("/users")
     {

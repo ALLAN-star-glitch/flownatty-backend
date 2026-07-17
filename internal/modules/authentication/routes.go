@@ -1,13 +1,13 @@
 package authentication
 
 import (
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/authentication/handler"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/authentication/authhandler"
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterAuthRoutes(
 	router *gin.RouterGroup,
-	authHandler *handler.AuthHandler,
+	authHandler *authhandler.AuthHandler,
 ) {
 	auth := router.Group("/auth")
 	{

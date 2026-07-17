@@ -6,39 +6,47 @@ import (
 
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/database"
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/handler"
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/repository"
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/service"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/bizhandler"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/bizrepository"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/business/bizservice"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/permissions"
 	"github.com/gin-gonic/gin"
 )
 
 type BusinessModule struct {
-	businessHandler *handler.BusinessHandler
-	memberHandler   *handler.MemberHandler
-	businessService *service.BusinessService
+	businessHandler *bizhandler.BusinessHandler
+	memberHandler   *bizhandler.MemberHandler
+	businessService *bizservice.BusinessService
 }
 
 // NewBusinessModule creates a new business module
-func NewBusinessModule(cfg *config.Config, permService *permissions.Service) *BusinessModule {
+func NewBusinessModule(
+	cfg *config.Config,
+	permService *permissions.Service,
+	enforcer *permissions.Enforcer,
+) *BusinessModule {
 	db := database.GetDB()
 
 	// Initialize repositories
-	businessRepo := repository.NewBusinessRepository(db)
-	productRepo := repository.NewProductRepository(db)
-	memberRepo := repository.NewBusinessMemberRepository(db)
+	businessRepo := bizrepository.NewBusinessRepository(db)
+	productRepo := bizrepository.NewProductRepository(db)
+	memberRepo := bizrepository.NewBusinessMemberRepository(db)
+	onboardingRepo := bizrepository.NewOnboardingRepository(db)
 
-	// Initialize services
-	businessService := service.NewBusinessService(
+	// Initialize service with all dependencies
+	businessService := bizservice.NewBusinessService(
 		businessRepo,
 		productRepo,
+		onboardingRepo,
 		memberRepo,
+		enforcer,
+		permService,
 		db,
 	)
 
 	// Initialize handlers
-	businessHandler := handler.NewBusinessHandler(businessService)
-	memberHandler := handler.NewMemberHandler(businessService)
+	businessHandler := bizhandler.NewBusinessHandler(businessService)
+	memberHandler := bizhandler.NewMemberHandler(businessService)
 
 	return &BusinessModule{
 		businessHandler: businessHandler,
@@ -63,25 +71,27 @@ func (m *BusinessModule) SetupRoutes(
 }
 
 // GetBusinessService returns the business service
-func (m *BusinessModule) GetBusinessService() *service.BusinessService {
+func (m *BusinessModule) GetBusinessService() *bizservice.BusinessService {
 	return m.businessService
 }
 
 // GetBusinessHandler returns the business handler
-func (m *BusinessModule) GetBusinessHandler() *handler.BusinessHandler {
+func (m *BusinessModule) GetBusinessHandler() *bizhandler.BusinessHandler {
 	return m.businessHandler
 }
 
 // GetMemberHandler returns the member handler
-func (m *BusinessModule) GetMemberHandler() *handler.MemberHandler {
+func (m *BusinessModule) GetMemberHandler() *bizhandler.MemberHandler {
 	return m.memberHandler
 }
+
 
 // Init initializes the module
 func (m *BusinessModule) Init(ctx context.Context) error {
 	log.Println("Business module initialized")
 	return nil
 }
+
 
 // Close closes the module and cleans up resources
 func (m *BusinessModule) Close() {

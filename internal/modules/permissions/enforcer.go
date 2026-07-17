@@ -36,7 +36,7 @@ var (
 // Enforcer wraps the Casbin enforcer with additional functionality - singleton pattern, auto-reload, and thread safety
 type Enforcer struct {
 	*casbin.Enforcer
-	mu      sync.RWMutex 
+	mu      sync.RWMutex
 	cfg     *config.CasbinConfig
 	db      *gorm.DB
 	ctx     context.Context
@@ -138,6 +138,10 @@ func (e *Enforcer) autoLoadPolicies() {
 	}
 }
 
+// ================================================
+// PERMISSION CHECK METHODS
+// ================================================
+
 // Enforce checks if a user has permission in a domain
 func (e *Enforcer) Enforce(userID string, domain string, resource Resource, action Action) (bool, error) {
 	return e.EnforceWithContext(userID, domain, resource.String(), action.String())
@@ -156,6 +160,10 @@ func (e *Enforcer) BatchEnforce(requests [][]interface{}) ([]bool, error) {
 	defer e.mu.RUnlock()
 	return e.Enforcer.BatchEnforce(requests)
 }
+
+// ================================================
+// POLICY MANAGEMENT METHODS
+// ================================================
 
 // AddPolicy adds a new policy rule
 func (e *Enforcer) AddPolicy(sub, dom, obj, act string) (bool, error) {
@@ -198,6 +206,45 @@ func (e *Enforcer) RemoveGroupingPolicies(rules [][]string) (bool, error) {
 	defer e.mu.Unlock()
 	return e.Enforcer.RemoveGroupingPolicies(rules)
 }
+
+// HasPolicy checks if a policy exists
+func (e *Enforcer) HasPolicy(sub, dom, obj, act string) (bool, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Enforcer.HasPolicy(sub, dom, obj, act)
+}
+
+// HasGroupingPolicy checks if a grouping policy exists (role assignment)
+func (e *Enforcer) HasGroupingPolicy(user, role, domain string) (bool, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Enforcer.HasGroupingPolicy(user, role, domain)
+}
+
+// GetPolicy returns all policies (with error handling)
+func (e *Enforcer) GetPolicy() ([][]string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Enforcer.GetPolicy()
+}
+
+// GetGroupingPolicy returns all grouping policies (role assignments)
+func (e *Enforcer) GetGroupingPolicy() ([][]string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Enforcer.GetGroupingPolicy()
+}
+
+// GetFilteredPolicy gets policies filtered by field values
+func (e *Enforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) ([][]string, error) {
+	e.mu.RLock()
+	defer e.mu.RUnlock()
+	return e.Enforcer.GetFilteredPolicy(fieldIndex, fieldValues...)
+}
+
+// ================================================
+// ROLE MANAGEMENT METHODS
+// ================================================
 
 // AddRoleForUserInDomain adds a role for a user in a specific domain
 func (e *Enforcer) AddRoleForUserInDomain(userID, role, domain string) (bool, error) {
@@ -259,6 +306,10 @@ func (e *Enforcer) HasImplicitRoleForUserInDomain(userID, role, domain string) (
 	return false, nil
 }
 
+// ================================================
+// BUSINESS ROLE METHODS
+// ================================================
+
 // AddBusinessRole adds a business role for a user
 func (e *Enforcer) AddBusinessRole(userID string, businessID string, role Role) (bool, error) {
 	domain := BusinessDomain(businessID)
@@ -283,6 +334,40 @@ func (e *Enforcer) GetUserImplicitBusinessRoles(userID string, businessID string
 	return e.GetImplicitRolesForUser(userID, domain)
 }
 
+// IsBusinessAdmin checks if a user is an admin of a business
+func (e *Enforcer) IsBusinessAdmin(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleBusinessAdmin.String(), BusinessDomain(businessID))
+}
+
+// IsProductManager checks if a user is a product manager of a business
+func (e *Enforcer) IsProductManager(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleProductManager.String(), BusinessDomain(businessID))
+}
+
+// IsOrderManager checks if a user is an order manager of a business
+func (e *Enforcer) IsOrderManager(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleOrderManager.String(), BusinessDomain(businessID))
+}
+
+// IsContentManager checks if a user is a content manager of a business
+func (e *Enforcer) IsContentManager(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleContentManager.String(), BusinessDomain(businessID))
+}
+
+// IsServiceManager checks if a user is a service manager of a business
+func (e *Enforcer) IsServiceManager(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleServiceManager.String(), BusinessDomain(businessID))
+}
+
+// IsCustomerSupport checks if a user is customer support of a business
+func (e *Enforcer) IsCustomerSupport(userID string, businessID string) bool {
+	return e.HasRoleForUserInDomain(userID, RoleCustomerSupport.String(), BusinessDomain(businessID))
+}
+
+// ================================================
+// PLATFORM ROLE METHODS
+// ================================================
+
 // AddPlatformRole adds a platform-level role for a user
 func (e *Enforcer) AddPlatformRole(userID string, role Role) (bool, error) {
 	return e.AddRoleForUserInDomain(userID, role.String(), DomainPlatform)
@@ -298,14 +383,9 @@ func (e *Enforcer) GetUserPlatformRoles(userID string) []string {
 	return e.GetRolesForUserInDomain(userID, DomainPlatform)
 }
 
-// IsBusinessOwner checks if a user is the owner of a business
-func (e *Enforcer) IsBusinessOwner(userID string, businessID string) bool {
-	return e.HasRoleForUserInDomain(userID, RoleBusinessOwner.String(), BusinessDomain(businessID))
-}
-
-// IsBusinessStaff checks if a user is staff of a business
-func (e *Enforcer) IsBusinessStaff(userID string, businessID string) bool {
-	return e.HasRoleForUserInDomain(userID, RoleBusinessStaff.String(), BusinessDomain(businessID))
+// HasPlatformRole checks if a user has a specific platform role
+func (e *Enforcer) HasPlatformRole(userID, role string) bool {
+	return e.HasRoleForUserInDomain(userID, role, DomainPlatform)
 }
 
 // IsConsumer checks if a user is a consumer
@@ -323,37 +403,163 @@ func (e *Enforcer) IsSuperAdmin(userID string) bool {
 	return e.HasRoleForUserInDomain(userID, RoleSuperAdmin.String(), DomainPlatform)
 }
 
-// GetFilteredPolicy gets policies filtered by field values
-func (e *Enforcer) GetFilteredPolicy(fieldIndex int, fieldValues ...string) ([][]string, error) {
+// ================================================
+// BUSINESS ACCESS CHECK METHODS (NEW)
+// ================================================
+
+// GetDomainsForUser returns all domains where a user has roles
+func (e *Enforcer) GetDomainsForUser(userID string) []string {
 	e.mu.RLock()
 	defer e.mu.RUnlock()
-	return e.Enforcer.GetFilteredPolicy(fieldIndex, fieldValues...)
+
+	// Get all grouping policies (role assignments)
+	policies, err := e.Enforcer.GetGroupingPolicy()
+	if err != nil {
+		log.Printf("Error getting grouping policy: %v", err)
+		return []string{}
+	}
+
+	domains := make(map[string]bool)
+
+	for _, policy := range policies {
+		// policy format: [user, role, domain]
+		if len(policy) >= 3 && policy[0] == userID {
+			domains[policy[2]] = true
+		}
+	}
+
+	result := make([]string, 0, len(domains))
+	for domain := range domains {
+		result = append(result, domain)
+	}
+	return result
 }
 
-// HasPolicy checks if a policy exists
-func (e *Enforcer) HasPolicy(sub, dom, obj, act string) (bool, error) {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.Enforcer.HasPolicy(sub, dom, obj, act)
+// HasAnyBusinessRole checks if a user has any business-related role in any domain
+func (e *Enforcer) HasAnyBusinessRole(userID string) bool {
+	// Get all domains where the user has roles
+	domains := e.GetDomainsForUser(userID)
+
+	for _, domain := range domains {
+		if IsBusinessDomain(domain) {
+			roles := e.GetRolesForUserInDomain(userID, domain)
+			if len(roles) > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }
 
-// HasGroupingPolicy checks if a grouping policy exists (role assignment)
-func (e *Enforcer) HasGroupingPolicy(user, role, domain string) (bool, error) {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.Enforcer.HasGroupingPolicy(user, role, domain)
+// GetUserBusinesses returns all business IDs where a user has roles
+func (e *Enforcer) GetUserBusinesses(userID string) []string {
+	domains := e.GetDomainsForUser(userID)
+	businesses := []string{}
+
+	for _, domain := range domains {
+		if IsBusinessDomain(domain) {
+			businessID := ExtractBusinessID(domain)
+			if businessID != "" {
+				businesses = append(businesses, businessID)
+			}
+		}
+	}
+	return businesses
 }
 
-// GetPolicy returns all policies (with error handling)
-func (e *Enforcer) GetPolicy() ([][]string, error) {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.Enforcer.GetPolicy()
+// GetUserBusinessRolesInAllBusinesses returns all business roles for a user across all businesses
+func (e *Enforcer) GetUserBusinessRolesInAllBusinesses(userID string) map[string][]string {
+	domains := e.GetDomainsForUser(userID)
+	result := make(map[string][]string)
+
+	for _, domain := range domains {
+		if IsBusinessDomain(domain) {
+			businessID := ExtractBusinessID(domain)
+			if businessID != "" {
+				roles := e.GetRolesForUserInDomain(userID, domain)
+				if len(roles) > 0 {
+					result[businessID] = roles
+				}
+			}
+		}
+	}
+	return result
 }
 
-// GetGroupingPolicy returns all grouping policies (role assignments)
-func (e *Enforcer) GetGroupingPolicy() ([][]string, error) {
-	e.mu.RLock()
-	defer e.mu.RUnlock()
-	return e.Enforcer.GetGroupingPolicy()
+// GetUserBusinessIDsWithRole returns business IDs where a user has a specific role
+func (e *Enforcer) GetUserBusinessIDsWithRole(userID string, role string) []string {
+	domains := e.GetDomainsForUser(userID)
+	businesses := []string{}
+
+	for _, domain := range domains {
+		if IsBusinessDomain(domain) && e.HasRoleForUserInDomain(userID, role, domain) {
+			businessID := ExtractBusinessID(domain)
+			if businessID != "" {
+				businesses = append(businesses, businessID)
+			}
+		}
+	}
+	return businesses
+}
+
+// HasAnyBusinessAdminRole checks if a user is an admin of ANY business
+func (e *Enforcer) HasAnyBusinessAdminRole(userID string) bool {
+	domains := e.GetDomainsForUser(userID)
+
+	for _, domain := range domains {
+		if IsBusinessDomain(domain) && e.HasRoleForUserInDomain(userID, RoleBusinessAdmin.String(), domain) {
+			return true
+		}
+	}
+	return false
+}
+
+
+// ================================================
+// RESOURCE-SPECIFIC PERMISSION HELPERS
+// ================================================
+
+// CanManageBusiness checks if user can manage a business
+func (e *Enforcer) CanManageBusiness(userID, businessID string) bool {
+	allowed, err := e.Enforce(userID, BusinessDomain(businessID), ResourceBusiness, ActionManage)
+	if err != nil {
+		return false
+	}
+	return allowed
+}
+
+// CanManageMembers checks if user can manage members
+func (e *Enforcer) CanManageMembers(userID, businessID string) bool {
+	allowed, err := e.Enforce(userID, BusinessDomain(businessID), ResourceMember, ActionManage)
+	if err != nil {
+		return false
+	}
+	return allowed
+}
+
+// CanManageProducts checks if user can manage products
+func (e *Enforcer) CanManageProducts(userID, businessID string) bool {
+	allowed, err := e.Enforce(userID, BusinessDomain(businessID), ResourceProduct, ActionManage)
+	if err != nil {
+		return false
+	}
+	return allowed
+}
+
+// CanManageOrders checks if user can manage orders
+func (e *Enforcer) CanManageOrders(userID, businessID string) bool {
+	allowed, err := e.Enforce(userID, BusinessDomain(businessID), ResourceOrder, ActionManage)
+	if err != nil {
+		return false
+	}
+	return allowed
+}
+
+// HasPermission checks if user has a specific permission
+func (e *Enforcer) HasPermission(userID, businessID string, resource Resource, action Action) bool {
+	allowed, err := e.Enforce(userID, BusinessDomain(businessID), resource, action)
+	if err != nil {
+		return false
+	}
+	return allowed
 }

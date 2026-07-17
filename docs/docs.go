@@ -9,16 +9,7 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "termsOfService": "http://swagger.io/terms/",
-        "contact": {
-            "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@swagger.io"
-        },
-        "license": {
-            "name": "Apache 2.0",
-            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
-        },
+        "contact": {},
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
@@ -434,7 +425,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateUserRoleRequest"
+                            "$ref": "#/definitions/userhandler.UpdateUserRoleRequest"
                         }
                     }
                 ],
@@ -556,7 +547,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ForgotPasswordRequest"
+                            "$ref": "#/definitions/authhandler.ForgotPasswordRequest"
                         }
                     }
                 ],
@@ -572,7 +563,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.ForgotPasswordResponse"
+                                            "$ref": "#/definitions/authhandler.ForgotPasswordResponse"
                                         }
                                     }
                                 }
@@ -620,7 +611,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LoginRequest"
+                            "$ref": "#/definitions/authhandler.LoginRequest"
                         }
                     }
                 ],
@@ -636,7 +627,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.TwoFactorAuthResponse"
+                                            "$ref": "#/definitions/authhandler.TwoFactorAuthResponse"
                                         }
                                     }
                                 }
@@ -684,7 +675,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.LogoutRequest"
+                            "$ref": "#/definitions/authhandler.LogoutRequest"
                         }
                     }
                 ],
@@ -730,7 +721,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RefreshTokenRequest"
+                            "$ref": "#/definitions/authhandler.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -746,7 +737,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.RefreshResponse"
+                                            "$ref": "#/definitions/authhandler.RefreshResponse"
                                         }
                                     }
                                 }
@@ -788,7 +779,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.RegisterRequest"
+                            "$ref": "#/definitions/authhandler.RegisterRequest"
                         }
                     }
                 ],
@@ -853,7 +844,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ResendBusinessOTPRequest"
+                            "$ref": "#/definitions/authhandler.ResendBusinessOTPRequest"
                         }
                     }
                 ],
@@ -912,7 +903,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.ResendOTPRequest"
+                            "$ref": "#/definitions/authhandler.ResendOTPRequest"
                         }
                     }
                 ],
@@ -928,7 +919,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.OTPResponse"
+                                            "$ref": "#/definitions/authhandler.OTPResponse"
                                         }
                                     }
                                 }
@@ -976,7 +967,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VerifyTwoFactorOTPRequest"
+                            "$ref": "#/definitions/authhandler.VerifyTwoFactorOTPRequest"
                         }
                     }
                 ],
@@ -992,7 +983,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.LoginResponse"
+                                            "$ref": "#/definitions/authhandler.LoginResponse"
                                         }
                                     }
                                 }
@@ -1046,7 +1037,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VerifyBusinessEmailRequest"
+                            "$ref": "#/definitions/authhandler.VerifyBusinessEmailRequest"
                         }
                     }
                 ],
@@ -1111,7 +1102,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VerifyOTPRequest"
+                            "$ref": "#/definitions/authhandler.VerifyOTPRequest"
                         }
                     }
                 ],
@@ -1127,7 +1118,8 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.UserResponse"
+                                            "type": "object",
+                                            "additionalProperties": true
                                         }
                                     }
                                 }
@@ -1175,7 +1167,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.VerifyResetOTPRequest"
+                            "$ref": "#/definitions/authhandler.VerifyResetOTPRequest"
                         }
                     }
                 ],
@@ -1191,7 +1183,7 @@ const docTemplate = `{
                                     "type": "object",
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/definitions/handler.VerifyResetOTPResponse"
+                                            "$ref": "#/definitions/authhandler.VerifyResetOTPResponse"
                                         }
                                     }
                                 }
@@ -1206,6 +1198,349 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/business-sectors": {
+            "get": {
+                "description": "Get all business sectors (industry categories) for dropdowns",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get all business sectors",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.BusinessSector"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/business-subcategories": {
+            "get": {
+                "description": "Get all business subcategories for dropdowns",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get all business subcategories",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.BusinessSubcategory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/business-subcategories/sector/{sectorId}": {
+            "get": {
+                "description": "Get business subcategories filtered by sector ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get business subcategories by sector",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Sector ID",
+                        "name": "sectorId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.BusinessSubcategory"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/business-types": {
+            "get": {
+                "description": "Get all business types (legal structures) for dropdowns",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get all business types",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.BusinessType"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/businesses/by-sector": {
+            "get": {
+                "description": "Get all businesses in a specific sector (e.g., technology, financial)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get businesses by sector",
+                "parameters": [
+                    {
+                        "enum": [
+                            "retail",
+                            "wholesale",
+                            "fashion",
+                            "beauty",
+                            "food",
+                            "health",
+                            "agriculture",
+                            "construction",
+                            "real_estate",
+                            "transport",
+                            "logistics",
+                            "hospitality",
+                            "tourism",
+                            "education",
+                            "professional",
+                            "financial",
+                            "technology",
+                            "telecom",
+                            "energy",
+                            "manufacturing",
+                            "mining",
+                            "automotive",
+                            "entertainment",
+                            "media",
+                            "sports",
+                            "creative",
+                            "community",
+                            "environment",
+                            "security",
+                            "cleaning",
+                            "veterinary"
+                        ],
+                        "type": "string",
+                        "description": "Sector",
+                        "name": "sector",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/businesses/by-type": {
+            "get": {
+                "description": "Get all businesses of a specific type (e.g., private_company, sole_proprietorship)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get businesses by business type",
+                "parameters": [
+                    {
+                        "enum": [
+                            "sole_proprietorship",
+                            "sole_trader",
+                            "partnership",
+                            "limited_partnership",
+                            "private_company",
+                            "public_company",
+                            "limited_by_guarantee",
+                            "cooperative",
+                            "sacco",
+                            "ngo",
+                            "cbo",
+                            "trust",
+                            "foundation",
+                            "faith_based",
+                            "franchise",
+                            "epz",
+                            "special_economic",
+                            "state_corporation",
+                            "government_agency"
+                        ],
+                        "type": "string",
+                        "description": "Business type",
+                        "name": "business_type",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Page number",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "maximum": 100,
+                        "minimum": 1,
+                        "type": "integer",
+                        "default": 20,
+                        "description": "Page size",
+                        "name": "page_size",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/response.BaseResponse"
                         }
@@ -1311,6 +1646,65 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/businesses/name/{name}": {
+            "get": {
+                "description": "Get business details by name",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get business by name",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Business Name",
+                        "name": "name",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.Business"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/response.BaseResponse"
                         }
@@ -1477,7 +1871,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update business details",
+                "description": "Update business details (requires admin or manager role)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1502,7 +1896,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateBusinessRequest"
+                            "$ref": "#/definitions/bizhandler.UpdateBusinessRequest"
                         }
                     }
                 ],
@@ -1563,7 +1957,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Delete a business (owners only)",
+                "description": "Delete a business (requires admin or owner role)",
                 "produces": [
                     "application/json"
                 ],
@@ -1692,7 +2086,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Add a user as a member of a business (owners only)",
+                "description": "Add a user as a member of a business (admins only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1717,7 +2111,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.AddMemberRequest"
+                            "$ref": "#/definitions/bizhandler.AddMemberRequest"
                         }
                     }
                 ],
@@ -1780,7 +2174,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Update a member's role in a business (owners only)",
+                "description": "Update a member's role in a business (admins only)",
                 "consumes": [
                     "application/json"
                 ],
@@ -1812,7 +2206,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handler.UpdateMemberRoleRequest"
+                            "$ref": "#/definitions/bizhandler.UpdateMemberRoleRequest"
                         }
                     }
                 ],
@@ -1861,7 +2255,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Remove a member from a business (owners only)",
+                "description": "Remove a member from a business (admins only)",
                 "produces": [
                     "application/json"
                 ],
@@ -1924,31 +2318,174 @@ const docTemplate = `{
                     }
                 }
             }
-        }
-    },
-    "definitions": {
-        "handler.AddMemberRequest": {
-            "type": "object",
-            "required": [
-                "role",
-                "user_id"
-            ],
-            "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "business_owner",
-                        "business_staff"
-                    ],
-                    "example": "business_staff"
-                },
-                "user_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
+        },
+        "/api/v1/businesses/{id}/stats": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get statistics for a business (requires admin or manager role)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get business statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Business ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": true
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
                 }
             }
         },
-        "handler.ForgotPasswordRequest": {
+        "/api/v1/businesses/{id}/verify": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Verify a business (platform admin only)",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Verify a business",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Business ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.BaseResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/establishment-types": {
+            "get": {
+                "description": "Get all establishment types for dropdowns",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Business"
+                ],
+                "summary": "Get all establishment types",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.BaseResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/models.EstablishmentType"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "authhandler.ForgotPasswordRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -1966,7 +2503,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ForgotPasswordResponse": {
+        "authhandler.ForgotPasswordResponse": {
             "type": "object",
             "properties": {
                 "expires_in": {
@@ -1979,7 +2516,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginRequest": {
+        "authhandler.LoginRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -1996,7 +2533,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.LoginResponse": {
+        "authhandler.LoginResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -2012,11 +2549,11 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "user": {
-                    "$ref": "#/definitions/service.UserInfo"
+                    "$ref": "#/definitions/authservice.UserInfo"
                 }
             }
         },
-        "handler.LogoutRequest": {
+        "authhandler.LogoutRequest": {
             "type": "object",
             "properties": {
                 "refresh_token": {
@@ -2025,7 +2562,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.OTPResponse": {
+        "authhandler.OTPResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -2046,7 +2583,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RefreshResponse": {
+        "authhandler.RefreshResponse": {
             "type": "object",
             "properties": {
                 "access_token": {
@@ -2067,7 +2604,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RefreshTokenRequest": {
+        "authhandler.RefreshTokenRequest": {
             "type": "object",
             "required": [
                 "refresh_token"
@@ -2079,7 +2616,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.RegisterRequest": {
+        "authhandler.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",
@@ -2094,9 +2631,6 @@ const docTemplate = `{
                 "business_category": {
                     "type": "string"
                 },
-                "business_description": {
-                    "type": "string"
-                },
                 "business_email": {
                     "type": "string"
                 },
@@ -2107,14 +2641,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "business_type": {
-                    "description": "Business fields (required if role is business_owner)",
-                    "type": "string",
-                    "enum": [
-                        "sole_proprietor",
-                        "partnership",
-                        "company",
-                        "cooperative"
-                    ]
+                    "type": "string"
                 },
                 "email": {
                     "type": "string",
@@ -2137,13 +2664,13 @@ const docTemplate = `{
                     "type": "string",
                     "enum": [
                         "consumer",
-                        "business_owner"
+                        "business_admin"
                     ],
                     "example": "consumer"
                 }
             }
         },
-        "handler.ResendBusinessOTPRequest": {
+        "authhandler.ResendBusinessOTPRequest": {
             "type": "object",
             "required": [
                 "business_email",
@@ -2159,7 +2686,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.ResendOTPRequest": {
+        "authhandler.ResendOTPRequest": {
             "type": "object",
             "required": [
                 "email"
@@ -2171,7 +2698,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.TwoFactorAuthResponse": {
+        "authhandler.TwoFactorAuthResponse": {
             "type": "object",
             "properties": {
                 "email": {
@@ -2188,7 +2715,140 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateBusinessRequest": {
+        "authhandler.VerifyBusinessEmailRequest": {
+            "type": "object",
+            "required": [
+                "business_email",
+                "otp",
+                "user_id"
+            ],
+            "properties": {
+                "business_email": {
+                    "type": "string",
+                    "example": "info@business.com"
+                },
+                "otp": {
+                    "type": "string",
+                    "example": "123456"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "authhandler.VerifyOTPRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "otp"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
+                "otp": {
+                    "type": "string",
+                    "example": "123456"
+                }
+            }
+        },
+        "authhandler.VerifyResetOTPRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "otp"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
+                "otp": {
+                    "type": "string",
+                    "example": "123456"
+                }
+            }
+        },
+        "authhandler.VerifyResetOTPResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Password reset successfully"
+                }
+            }
+        },
+        "authhandler.VerifyTwoFactorOTPRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "otp"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "john@example.com"
+                },
+                "otp": {
+                    "type": "string",
+                    "example": "123456"
+                }
+            }
+        },
+        "authservice.UserInfo": {
+            "type": "object",
+            "properties": {
+                "avatar": {
+                    "type": "string"
+                },
+                "business_id": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "phone_number": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                }
+            }
+        },
+        "bizhandler.AddMemberRequest": {
+            "type": "object",
+            "required": [
+                "role",
+                "user_id"
+            ],
+            "properties": {
+                "role": {
+                    "type": "string",
+                    "enum": [
+                        "business_admin",
+                        "product_manager",
+                        "order_manager",
+                        "content_manager",
+                        "service_manager",
+                        "customer_support"
+                    ],
+                    "example": "product_manager"
+                },
+                "user_id": {
+                    "type": "string",
+                    "example": "550e8400-e29b-41d4-a716-446655440000"
+                }
+            }
+        },
+        "bizhandler.UpdateBusinessRequest": {
             "type": "object",
             "properties": {
                 "address": {
@@ -2241,7 +2901,7 @@ const docTemplate = `{
                 }
             }
         },
-        "handler.UpdateMemberRoleRequest": {
+        "bizhandler.UpdateMemberRoleRequest": {
             "type": "object",
             "required": [
                 "role"
@@ -2250,148 +2910,14 @@ const docTemplate = `{
                 "role": {
                     "type": "string",
                     "enum": [
-                        "business_owner",
-                        "business_staff"
+                        "business_admin",
+                        "product_manager",
+                        "order_manager",
+                        "content_manager",
+                        "service_manager",
+                        "customer_support"
                     ],
-                    "example": "business_owner"
-                }
-            }
-        },
-        "handler.UpdateUserRoleRequest": {
-            "type": "object",
-            "required": [
-                "role"
-            ],
-            "properties": {
-                "role": {
-                    "type": "string",
-                    "enum": [
-                        "consumer",
-                        "business_owner",
-                        "admin",
-                        "super_admin"
-                    ],
-                    "example": "business_owner"
-                }
-            }
-        },
-        "handler.UserResponse": {
-            "type": "object",
-            "properties": {
-                "expires_in": {
-                    "type": "integer",
-                    "example": 86400
-                },
-                "token_type": {
-                    "type": "string",
-                    "example": "Bearer"
-                },
-                "user": {
-                    "type": "object",
-                    "properties": {
-                        "email": {
-                            "type": "string",
-                            "example": "john@example.com"
-                        },
-                        "id": {
-                            "type": "string",
-                            "example": "550e8400-e29b-41d4-a716-446655440000"
-                        },
-                        "name": {
-                            "type": "string",
-                            "example": "John Doe"
-                        },
-                        "phone": {
-                            "type": "string",
-                            "example": "+254712345678"
-                        },
-                        "role": {
-                            "type": "string",
-                            "example": "consumer"
-                        }
-                    }
-                }
-            }
-        },
-        "handler.VerifyBusinessEmailRequest": {
-            "type": "object",
-            "required": [
-                "business_email",
-                "otp",
-                "user_id"
-            ],
-            "properties": {
-                "business_email": {
-                    "type": "string",
-                    "example": "info@business.com"
-                },
-                "otp": {
-                    "type": "string",
-                    "example": "123456"
-                },
-                "user_id": {
-                    "type": "string",
-                    "example": "550e8400-e29b-41d4-a716-446655440000"
-                }
-            }
-        },
-        "handler.VerifyOTPRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "otp"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "john@example.com"
-                },
-                "otp": {
-                    "type": "string",
-                    "example": "123456"
-                }
-            }
-        },
-        "handler.VerifyResetOTPRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "otp"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "john@example.com"
-                },
-                "otp": {
-                    "type": "string",
-                    "example": "123456"
-                }
-            }
-        },
-        "handler.VerifyResetOTPResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Password reset successfully"
-                }
-            }
-        },
-        "handler.VerifyTwoFactorOTPRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "otp"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "john@example.com"
-                },
-                "otp": {
-                    "type": "string",
-                    "example": "123456"
+                    "example": "product_manager"
                 }
             }
         },
@@ -2401,16 +2927,40 @@ const docTemplate = `{
                 "address": {
                     "type": "string"
                 },
-                "category": {
+                "business_size": {
+                    "type": "string"
+                },
+                "business_type": {
+                    "description": "Relationships",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.BusinessType"
+                        }
+                    ]
+                },
+                "business_type_id": {
+                    "description": "Business Classification",
                     "type": "string"
                 },
                 "created_at": {
                     "type": "string"
                 },
                 "description": {
+                    "description": "Business Details",
                     "type": "string"
                 },
                 "email": {
+                    "type": "string"
+                },
+                "employee_count": {
+                    "description": "Business Metadata",
+                    "type": "integer"
+                },
+                "establishment_type": {
+                    "$ref": "#/definitions/models.EstablishmentType"
+                },
+                "establishment_type_id": {
+                    "description": "Establishment Type",
                     "type": "string"
                 },
                 "id": {
@@ -2419,7 +2969,14 @@ const docTemplate = `{
                 "is_active": {
                     "type": "boolean"
                 },
+                "is_delivery": {
+                    "type": "boolean"
+                },
+                "is_remote": {
+                    "type": "boolean"
+                },
                 "is_verified": {
+                    "description": "Status",
                     "type": "boolean"
                 },
                 "latitude": {
@@ -2434,15 +2991,17 @@ const docTemplate = `{
                 "longitude": {
                     "type": "number"
                 },
+                "market_name": {
+                    "description": "For Markets/Complexes (Physical)",
+                    "type": "string"
+                },
                 "members": {
-                    "description": "Relationships",
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/models.BusinessMember"
                     }
                 },
                 "name": {
-                    "description": "REMOVE: UserID field - now in BusinessMember",
                     "type": "string"
                 },
                 "orders": {
@@ -2466,8 +3025,34 @@ const docTemplate = `{
                         "$ref": "#/definitions/models.Product"
                     }
                 },
+                "sector": {
+                    "$ref": "#/definitions/models.BusinessSector"
+                },
+                "sector_id": {
+                    "type": "string"
+                },
+                "social_media": {
+                    "description": "JSON or comma-separated",
+                    "type": "string"
+                },
+                "stall_number": {
+                    "type": "string"
+                },
+                "subcategory": {
+                    "$ref": "#/definitions/models.BusinessSubcategory"
+                },
+                "subcategory_id": {
+                    "type": "string"
+                },
                 "updated_at": {
                     "type": "string"
+                },
+                "website": {
+                    "description": "For Digital/Remote Businesses",
+                    "type": "string"
+                },
+                "year_established": {
+                    "type": "integer"
                 }
             }
         },
@@ -2499,7 +3084,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "role": {
-                    "description": "Uses permissions.Role values",
                     "type": "string"
                 },
                 "updated_at": {
@@ -2509,6 +3093,112 @@ const docTemplate = `{
                     "$ref": "#/definitions/models.User"
                 },
                 "user_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BusinessSector": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "Display: \"Financial Services\"",
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Constant: \"financial\"",
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BusinessSubcategory": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "✅ ADD THIS",
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sector": {
+                    "description": "Relationship",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/models.BusinessSector"
+                        }
+                    ]
+                },
+                "sector_id": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.BusinessType": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "description": "Display: \"Private Limited Company (Ltd)\"",
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "description": "Constant: \"private_company\"",
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }
@@ -2542,6 +3232,49 @@ const docTemplate = `{
                 },
                 "slug": {
                     "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                }
+            }
+        },
+        "models.EstablishmentType": {
+            "type": "object",
+            "properties": {
+                "businesses": {
+                    "description": "Relationships",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/models.Business"
+                    }
+                },
+                "category": {
+                    "description": "physical, digital, hybrid, mobile",
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "display_name": {
+                    "type": "string"
+                },
+                "icon": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "is_active": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "sort_order": {
+                    "type": "integer"
                 },
                 "updated_at": {
                     "type": "string"
@@ -2789,7 +3522,6 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "two_factor_enabled": {
-                    "description": "2FA fields",
                     "type": "boolean"
                 },
                 "updated_at": {
@@ -2847,51 +3579,35 @@ const docTemplate = `{
                 }
             }
         },
-        "service.UserInfo": {
+        "userhandler.UpdateUserRoleRequest": {
             "type": "object",
+            "required": [
+                "role"
+            ],
             "properties": {
-                "avatar": {
-                    "type": "string"
-                },
-                "business_id": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "phoneNumber": {
-                    "type": "string"
-                },
                 "role": {
-                    "type": "string"
+                    "type": "string",
+                    "enum": [
+                        "consumer",
+                        "business_owner",
+                        "admin",
+                        "super_admin"
+                    ],
+                    "example": "business_owner"
                 }
             }
-        }
-    },
-    "securityDefinitions": {
-        "BearerAuth": {
-            "description": "Type \"Bearer\" followed by a space and the JWT token.",
-            "type": "apiKey",
-            "name": "Authorization",
-            "in": "header"
         }
     }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/",
+	Version:          "",
+	Host:             "",
+	BasePath:         "",
 	Schemes:          []string{},
-	Title:            "Flownatty Backend API",
-	Description:      "Backend API engine for Flownatty platform.",
+	Title:            "",
+	Description:      "",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

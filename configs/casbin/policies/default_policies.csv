@@ -1,5 +1,3 @@
-# Purpose: Seeds initial policies 
-
 # ============================================================
 # PLATFORM POLICIES
 # ============================================================
@@ -14,6 +12,7 @@ p, admin, platform, business, read
 p, admin, platform, analytics, read
 p, admin, platform, platform, read
 p, admin, platform, platform, update
+p, admin, platform, member, read    # Platform admins can view members
 
 # ============================================================
 # CONSUMER POLICIES (Global - any domain)
@@ -64,100 +63,114 @@ p, consumer, *, wishlist, read
 p, consumer, *, wishlist, delete
 
 # ============================================================
-# BUSINESS OWNER POLICIES (Domain-Specific)
+# BUSINESS ADMIN POLICIES (Domain-Specific)
 # Note: {{.BusinessID}} is replaced with actual business ID
 # These are templates - actual policies added per business
 # ============================================================
 
+# ✅ Member Management (NEW)
+p, business_admin, {{.BusinessID}}, member, create
+p, business_admin, {{.BusinessID}}, member, read
+p, business_admin, {{.BusinessID}}, member, update
+p, business_admin, {{.BusinessID}}, member, delete
+
 # Product Management
-p, business_owner, {{.BusinessID}}, product, create
-p, business_owner, {{.BusinessID}}, product, read
-p, business_owner, {{.BusinessID}}, product, update
-p, business_owner, {{.BusinessID}}, product, delete
+p, business_admin, {{.BusinessID}}, product, create
+p, business_admin, {{.BusinessID}}, product, read
+p, business_admin, {{.BusinessID}}, product, update
+p, business_admin, {{.BusinessID}}, product, delete
 
 # Order Management
-p, business_owner, {{.BusinessID}}, order, read
-p, business_owner, {{.BusinessID}}, order, update
-p, business_owner, {{.BusinessID}}, order, delete
+p, business_admin, {{.BusinessID}}, order, read
+p, business_admin, {{.BusinessID}}, order, update
+p, business_admin, {{.BusinessID}}, order, delete
 
 # Booking Management
-p, business_owner, {{.BusinessID}}, booking, read
-p, business_owner, {{.BusinessID}}, booking, update
-p, business_owner, {{.BusinessID}}, booking, delete
-p, business_owner, {{.BusinessID}}, booking, confirm
-p, business_owner, {{.BusinessID}}, booking, complete
-p, business_owner, {{.BusinessID}}, booking, cancel
+p, business_admin, {{.BusinessID}}, booking, read
+p, business_admin, {{.BusinessID}}, booking, update
+p, business_admin, {{.BusinessID}}, booking, delete
+p, business_admin, {{.BusinessID}}, booking, confirm
+p, business_admin, {{.BusinessID}}, booking, complete
+p, business_admin, {{.BusinessID}}, booking, cancel
 
 # Post Management
-p, business_owner, {{.BusinessID}}, post, create
-p, business_owner, {{.BusinessID}}, post, read
-p, business_owner, {{.BusinessID}}, post, update
-p, business_owner, {{.BusinessID}}, post, delete
+p, business_admin, {{.BusinessID}}, post, create
+p, business_admin, {{.BusinessID}}, post, read
+p, business_admin, {{.BusinessID}}, post, update
+p, business_admin, {{.BusinessID}}, post, delete
 
 # Chat Management
-p, business_owner, {{.BusinessID}}, chat, read
-p, business_owner, {{.BusinessID}}, chat, create
-p, business_owner, {{.BusinessID}}, chat, update
+p, business_admin, {{.BusinessID}}, chat, read
+p, business_admin, {{.BusinessID}}, chat, create
+p, business_admin, {{.BusinessID}}, chat, update
 
 # Business Profile Management
-p, business_owner, {{.BusinessID}}, business, read
-p, business_owner, {{.BusinessID}}, business, update
-p, business_owner, {{.BusinessID}}, business, delete
+p, business_admin, {{.BusinessID}}, business, read
+p, business_admin, {{.BusinessID}}, business, update
+p, business_admin, {{.BusinessID}}, business, delete
 
 # Invoice Management
-p, business_owner, {{.BusinessID}}, invoice, create
-p, business_owner, {{.BusinessID}}, invoice, read
-p, business_owner, {{.BusinessID}}, invoice, update
-p, business_owner, {{.BusinessID}}, invoice, delete
-p, business_owner, {{.BusinessID}}, invoice, send
-p, business_owner, {{.BusinessID}}, invoice, mark_paid
+p, business_admin, {{.BusinessID}}, invoice, create
+p, business_admin, {{.BusinessID}}, invoice, read
+p, business_admin, {{.BusinessID}}, invoice, update
+p, business_admin, {{.BusinessID}}, invoice, delete
+p, business_admin, {{.BusinessID}}, invoice, send
+p, business_admin, {{.BusinessID}}, invoice, mark_paid
 
 # Lead Management
-p, business_owner, {{.BusinessID}}, lead, create
-p, business_owner, {{.BusinessID}}, lead, read
-p, business_owner, {{.BusinessID}}, lead, update
-p, business_owner, {{.BusinessID}}, lead, delete
-p, business_owner, {{.BusinessID}}, lead, convert
+p, business_admin, {{.BusinessID}}, lead, create
+p, business_admin, {{.BusinessID}}, lead, read
+p, business_admin, {{.BusinessID}}, lead, update
+p, business_admin, {{.BusinessID}}, lead, delete
+p, business_admin, {{.BusinessID}}, lead, convert
 
 # Customer Management
-p, business_owner, {{.BusinessID}}, customer, read
-p, business_owner, {{.BusinessID}}, customer, update
-p, business_owner, {{.BusinessID}}, customer, delete
+p, business_admin, {{.BusinessID}}, customer, read
+p, business_admin, {{.BusinessID}}, customer, update
+p, business_admin, {{.BusinessID}}, customer, delete
 
 # Payment Management
-p, business_owner, {{.BusinessID}}, payment, read
-p, business_owner, {{.BusinessID}}, payment, refund
+p, business_admin, {{.BusinessID}}, payment, read
+p, business_admin, {{.BusinessID}}, payment, refund
 
 # Dashboard
-p, business_owner, {{.BusinessID}}, dashboard, read
+p, business_admin, {{.BusinessID}}, dashboard, read
 
 # Analytics
-p, business_owner, {{.BusinessID}}, analytics, read
+p, business_admin, {{.BusinessID}}, analytics, read
 
 # ============================================================
-# BUSINESS STAFF POLICIES (Domain-Specific - Limited Access)
+# OTHER BUSINESS ROLE POLICIES
 # ============================================================
 
-# Order - Read and update only
-p, business_staff, {{.BusinessID}}, order, read
-p, business_staff, {{.BusinessID}}, order, update
+# Product Manager
+p, product_manager, {{.BusinessID}}, product, create
+p, product_manager, {{.BusinessID}}, product, read
+p, product_manager, {{.BusinessID}}, product, update
+p, product_manager, {{.BusinessID}}, product, delete
 
-# Booking - Read and update only
-p, business_staff, {{.BusinessID}}, booking, read
-p, business_staff, {{.BusinessID}}, booking, update
+# Order Manager
+p, order_manager, {{.BusinessID}}, order, read
+p, order_manager, {{.BusinessID}}, order, update
+p, order_manager, {{.BusinessID}}, order, delete
 
-# Chat - Read and reply
-p, business_staff, {{.BusinessID}}, chat, read
-p, business_staff, {{.BusinessID}}, chat, create
+# Content Manager
+p, content_manager, {{.BusinessID}}, post, create
+p, content_manager, {{.BusinessID}}, post, read
+p, content_manager, {{.BusinessID}}, post, update
+p, content_manager, {{.BusinessID}}, post, delete
 
-# Customer - Read only
-p, business_staff, {{.BusinessID}}, customer, read
+# Service Manager
+p, service_manager, {{.BusinessID}}, service, create
+p, service_manager, {{.BusinessID}}, service, read
+p, service_manager, {{.BusinessID}}, service, update
+p, service_manager, {{.BusinessID}}, service, delete
+p, service_manager, {{.BusinessID}}, booking, read
+p, service_manager, {{.BusinessID}}, booking, update
 
-# Product - Read only
-p, business_staff, {{.BusinessID}}, product, read
-
-# Payment - Read only
-p, business_staff, {{.BusinessID}}, payment, read
-
-# Dashboard - Read only
-p, business_staff, {{.BusinessID}}, dashboard, read
+# Customer Support
+p, customer_support, {{.BusinessID}}, customer, read
+p, customer_support, {{.BusinessID}}, chat, read
+p, customer_support, {{.BusinessID}}, chat, create
+p, customer_support, {{.BusinessID}}, chat, update
+p, customer_support, {{.BusinessID}}, order, read

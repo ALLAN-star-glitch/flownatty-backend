@@ -12,9 +12,13 @@ const (
 	RoleConsumer      Role = "consumer"
 	RolePremiumConsumer Role = "premium_consumer"
 
-	// Business roles (domain-specific)
-	RoleBusinessOwner Role = "business_owner"
-	RoleBusinessStaff Role = "business_staff"
+	// Business roles (platform permission level)
+	RoleBusinessAdmin    Role = "business_admin"     // Full business management
+	RoleProductManager   Role = "product_manager"    // Manage products, inventory, categories
+	RoleOrderManager     Role = "order_manager"      // Manage orders, shipping, refunds
+	RoleContentManager   Role = "content_manager"    // Manage posts, promotions, announcements
+	RoleServiceManager   Role = "service_manager"    // Manage services, bookings, appointments
+	RoleCustomerSupport  Role = "customer_support"   // Customer service, chat, support tickets
 
 	// System
 	RoleGuest Role = "guest"
@@ -43,6 +47,9 @@ const (
 	ResourceFollow    Resource = "follow"
 	ResourceNotification Resource = "notification"
 	ResourceDashboard Resource = "dashboard"
+	ResourcePromotion Resource = "promotion"
+	ResourceCategory  Resource = "category"
+	ResourceMember    Resource = "member" 
 )
 
 // Action represents an operation that can be performed
@@ -72,8 +79,6 @@ const (
 )
 
 // Domain helpers
-
-// BusinessDomain returns the domain string for a business
 func BusinessDomain(businessID string) string {
 	if businessID == "" {
 		return ""
@@ -81,7 +86,6 @@ func BusinessDomain(businessID string) string {
 	return "business:" + businessID
 }
 
-// UserDomain returns the domain string for a user
 func UserDomain(userID string) string {
 	if userID == "" {
 		return ""
@@ -89,22 +93,18 @@ func UserDomain(userID string) string {
 	return "user:" + userID
 }
 
-// IsBusinessDomain checks if a domain is a business domain
 func IsBusinessDomain(domain string) bool {
 	return len(domain) > 9 && domain[:9] == "business:"
 }
 
-// IsUserDomain checks if a domain is a user domain
 func IsUserDomain(domain string) bool {
 	return len(domain) > 5 && domain[:5] == "user:"
 }
 
-// IsPlatformDomain checks if a domain is the platform domain
 func IsPlatformDomain(domain string) bool {
 	return domain == DomainPlatform
 }
 
-// ExtractBusinessID extracts the business ID from a domain
 func ExtractBusinessID(domain string) string {
 	if IsBusinessDomain(domain) {
 		return domain[9:]
@@ -112,7 +112,6 @@ func ExtractBusinessID(domain string) string {
 	return ""
 }
 
-// ExtractUserID extracts the user ID from a domain
 func ExtractUserID(domain string) string {
 	if IsUserDomain(domain) {
 		return domain[5:]
@@ -127,8 +126,12 @@ func GetAllRoles() []Role {
 		RoleAdmin,
 		RoleConsumer,
 		RolePremiumConsumer,
-		RoleBusinessOwner,
-		RoleBusinessStaff,
+		RoleBusinessAdmin,
+		RoleProductManager,
+		RoleOrderManager,
+		RoleContentManager,
+		RoleServiceManager,
+		RoleCustomerSupport,
 		RoleGuest,
 	}
 }
@@ -155,6 +158,9 @@ func GetAllResources() []Resource {
 		ResourceFollow,
 		ResourceNotification,
 		ResourceDashboard,
+		ResourcePromotion,
+		ResourceCategory,
+		ResourceMember,
 	}
 }
 

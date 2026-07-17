@@ -2,11 +2,67 @@
 # Format: user, role, domain
 # Note: These are default assignments
 
-# System Roles
+# ============================================================
+# SYSTEM ROLES
+# ============================================================
+
+# System user gets super_admin access
 g, system, super_admin, platform
+
+# ============================================================
+# DEFAULT CONSUMER ROLE
+# ============================================================
 
 # Default Consumer Role (assigned to all registered consumers)
 g, consumer_default, consumer, platform
 
-# Default Business Owner Template (assigned per business)
+# ============================================================
+# DEFAULT BUSINESS ADMIN TEMPLATE (assigned per business)
 # Actual assignments happen at business creation time
+# ============================================================
+
+# Business Admin - Full business management
+# Assigned when a user creates a business or is added as admin
+# g, user_id, business_admin, business:business_id
+
+# Product Manager - Manage products, inventory, categories
+# g, user_id, product_manager, business:business_id
+
+# Order Manager - Manage orders, shipping, refunds
+# g, user_id, order_manager, business:business_id
+
+# Content Manager - Manage posts, promotions, announcements
+# g, user_id, content_manager, business:business_id
+
+# Service Manager - Manage services, bookings, appointments
+# g, user_id, service_manager, business:business_id
+
+# Customer Support - Customer service, chat, support tickets
+# g, user_id, customer_support, business:business_id
+
+# ============================================================
+# ROLE HIERARCHY (Inheritance)
+# Note: Higher roles inherit permissions from lower roles
+# ============================================================
+
+# Business Admin inherits ALL business roles
+g, business_admin, product_manager, {{.BusinessID}}
+g, business_admin, order_manager, {{.BusinessID}}
+g, business_admin, content_manager, {{.BusinessID}}
+g, business_admin, service_manager, {{.BusinessID}}
+g, business_admin, customer_support, {{.BusinessID}}
+
+# Product Manager inherits read-only permissions
+g, product_manager, consumer, {{.BusinessID}}
+
+# Order Manager inherits read-only permissions
+g, order_manager, consumer, {{.BusinessID}}
+
+# Content Manager inherits read-only permissions
+g, content_manager, consumer, {{.BusinessID}}
+
+# Service Manager inherits read-only permissions
+g, service_manager, consumer, {{.BusinessID}}
+
+# Customer Support inherits read-only permissions
+g, customer_support, consumer, {{.BusinessID}}

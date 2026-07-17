@@ -6,15 +6,15 @@ import (
 
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/config"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/database"
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/handler"
 	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/repository"
-	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/service"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/userhandler"
+	"github.com/ALLAN-star-glitch/flownatty-backend/internal/modules/usermanagement/userservice"
 	"github.com/gin-gonic/gin"
 )
 
 type UserManagementModule struct {
-	userHandler *handler.UserHandler
-	userService *service.UserService
+	userHandler *userhandler.UserHandler
+	userService *userservice.UserService
 }
 
 func NewUserManagementModule(cfg *config.Config) *UserManagementModule {
@@ -24,10 +24,10 @@ func NewUserManagementModule(cfg *config.Config) *UserManagementModule {
 	userRepo := repository.NewUserRepository(db)
 
 	// Initialize service
-	userService := service.NewUserService(userRepo)
+	userService := userservice.NewUserService(userRepo)
 
 	// Initialize handler
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := userhandler.NewUserHandler(userService)
 
 	return &UserManagementModule{
 		userHandler: userHandler,
@@ -46,12 +46,12 @@ func (m *UserManagementModule) SetupRoutes(
 }
 
 // GetUserHandler returns the user handler
-func (m *UserManagementModule) GetUserHandler() *handler.UserHandler {
+func (m *UserManagementModule) GetUserHandler() *userhandler.UserHandler {
 	return m.userHandler
 }
 
 // GetUserService returns the user service
-func (m *UserManagementModule) GetUserService() *service.UserService {
+func (m *UserManagementModule) GetUserService() *userservice.UserService {
 	return m.userService
 }
 

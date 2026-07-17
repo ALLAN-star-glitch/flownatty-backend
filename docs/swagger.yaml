@@ -1,21 +1,5 @@
-basePath: /
 definitions:
-  handler.AddMemberRequest:
-    properties:
-      role:
-        enum:
-        - business_owner
-        - business_staff
-        example: business_staff
-        type: string
-      user_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - role
-    - user_id
-    type: object
-  handler.ForgotPasswordRequest:
+  authhandler.ForgotPasswordRequest:
     properties:
       email:
         example: john@example.com
@@ -28,7 +12,7 @@ definitions:
     - email
     - new_password
     type: object
-  handler.ForgotPasswordResponse:
+  authhandler.ForgotPasswordResponse:
     properties:
       expires_in:
         example: 300
@@ -37,7 +21,7 @@ definitions:
         example: OTP sent to your email
         type: string
     type: object
-  handler.LoginRequest:
+  authhandler.LoginRequest:
     properties:
       email:
         example: john@example.com
@@ -49,7 +33,7 @@ definitions:
     - email
     - password
     type: object
-  handler.LoginResponse:
+  authhandler.LoginResponse:
     properties:
       access_token:
         type: string
@@ -60,15 +44,15 @@ definitions:
       token_type:
         type: string
       user:
-        $ref: '#/definitions/service.UserInfo'
+        $ref: '#/definitions/authservice.UserInfo'
     type: object
-  handler.LogoutRequest:
+  authhandler.LogoutRequest:
     properties:
       refresh_token:
         example: abc123xyz789...
         type: string
     type: object
-  handler.OTPResponse:
+  authhandler.OTPResponse:
     properties:
       email:
         example: john@example.com
@@ -83,7 +67,7 @@ definitions:
         example: consumer
         type: string
     type: object
-  handler.RefreshResponse:
+  authhandler.RefreshResponse:
     properties:
       access_token:
         example: eyJhbGciOiJIUzI1NiIs...
@@ -98,7 +82,7 @@ definitions:
         example: Bearer
         type: string
     type: object
-  handler.RefreshTokenRequest:
+  authhandler.RefreshTokenRequest:
     properties:
       refresh_token:
         example: abc123xyz789...
@@ -106,13 +90,11 @@ definitions:
     required:
     - refresh_token
     type: object
-  handler.RegisterRequest:
+  authhandler.RegisterRequest:
     properties:
       business_address:
         type: string
       business_category:
-        type: string
-      business_description:
         type: string
       business_email:
         type: string
@@ -121,12 +103,6 @@ definitions:
       business_phone:
         type: string
       business_type:
-        description: Business fields (required if role is business_owner)
-        enum:
-        - sole_proprietor
-        - partnership
-        - company
-        - cooperative
         type: string
       email:
         example: john@example.com
@@ -144,7 +120,7 @@ definitions:
       role:
         enum:
         - consumer
-        - business_owner
+        - business_admin
         example: consumer
         type: string
     required:
@@ -153,7 +129,7 @@ definitions:
     - password
     - phone_number
     type: object
-  handler.ResendBusinessOTPRequest:
+  authhandler.ResendBusinessOTPRequest:
     properties:
       business_email:
         example: info@business.com
@@ -164,7 +140,7 @@ definitions:
     - business_email
     - user_id
     type: object
-  handler.ResendOTPRequest:
+  authhandler.ResendOTPRequest:
     properties:
       email:
         example: john@example.com
@@ -172,7 +148,7 @@ definitions:
     required:
     - email
     type: object
-  handler.TwoFactorAuthResponse:
+  authhandler.TwoFactorAuthResponse:
     properties:
       email:
         example: john@example.com
@@ -184,7 +160,101 @@ definitions:
         example: true
         type: boolean
     type: object
-  handler.UpdateBusinessRequest:
+  authhandler.VerifyBusinessEmailRequest:
+    properties:
+      business_email:
+        example: info@business.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+      user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - business_email
+    - otp
+    - user_id
+    type: object
+  authhandler.VerifyOTPRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  authhandler.VerifyResetOTPRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  authhandler.VerifyResetOTPResponse:
+    properties:
+      message:
+        example: Password reset successfully
+        type: string
+    type: object
+  authhandler.VerifyTwoFactorOTPRequest:
+    properties:
+      email:
+        example: john@example.com
+        type: string
+      otp:
+        example: "123456"
+        type: string
+    required:
+    - email
+    - otp
+    type: object
+  authservice.UserInfo:
+    properties:
+      avatar:
+        type: string
+      business_id:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone_number:
+        type: string
+      role:
+        type: string
+    type: object
+  bizhandler.AddMemberRequest:
+    properties:
+      role:
+        enum:
+        - business_admin
+        - product_manager
+        - order_manager
+        - content_manager
+        - service_manager
+        - customer_support
+        example: product_manager
+        type: string
+      user_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    required:
+    - role
+    - user_id
+    type: object
+  bizhandler.UpdateBusinessRequest:
     properties:
       address:
         example: Upper Hill, Nairobi
@@ -224,132 +294,59 @@ definitions:
         example: "+254745678901"
         type: string
     type: object
-  handler.UpdateMemberRoleRequest:
+  bizhandler.UpdateMemberRoleRequest:
     properties:
       role:
         enum:
-        - business_owner
-        - business_staff
-        example: business_owner
+        - business_admin
+        - product_manager
+        - order_manager
+        - content_manager
+        - service_manager
+        - customer_support
+        example: product_manager
         type: string
     required:
     - role
-    type: object
-  handler.UpdateUserRoleRequest:
-    properties:
-      role:
-        enum:
-        - consumer
-        - business_owner
-        - admin
-        - super_admin
-        example: business_owner
-        type: string
-    required:
-    - role
-    type: object
-  handler.UserResponse:
-    properties:
-      expires_in:
-        example: 86400
-        type: integer
-      token_type:
-        example: Bearer
-        type: string
-      user:
-        properties:
-          email:
-            example: john@example.com
-            type: string
-          id:
-            example: 550e8400-e29b-41d4-a716-446655440000
-            type: string
-          name:
-            example: John Doe
-            type: string
-          phone:
-            example: "+254712345678"
-            type: string
-          role:
-            example: consumer
-            type: string
-        type: object
-    type: object
-  handler.VerifyBusinessEmailRequest:
-    properties:
-      business_email:
-        example: info@business.com
-        type: string
-      otp:
-        example: "123456"
-        type: string
-      user_id:
-        example: 550e8400-e29b-41d4-a716-446655440000
-        type: string
-    required:
-    - business_email
-    - otp
-    - user_id
-    type: object
-  handler.VerifyOTPRequest:
-    properties:
-      email:
-        example: john@example.com
-        type: string
-      otp:
-        example: "123456"
-        type: string
-    required:
-    - email
-    - otp
-    type: object
-  handler.VerifyResetOTPRequest:
-    properties:
-      email:
-        example: john@example.com
-        type: string
-      otp:
-        example: "123456"
-        type: string
-    required:
-    - email
-    - otp
-    type: object
-  handler.VerifyResetOTPResponse:
-    properties:
-      message:
-        example: Password reset successfully
-        type: string
-    type: object
-  handler.VerifyTwoFactorOTPRequest:
-    properties:
-      email:
-        example: john@example.com
-        type: string
-      otp:
-        example: "123456"
-        type: string
-    required:
-    - email
-    - otp
     type: object
   models.Business:
     properties:
       address:
         type: string
-      category:
+      business_size:
+        type: string
+      business_type:
+        allOf:
+        - $ref: '#/definitions/models.BusinessType'
+        description: Relationships
+      business_type_id:
+        description: Business Classification
         type: string
       created_at:
         type: string
       description:
+        description: Business Details
         type: string
       email:
+        type: string
+      employee_count:
+        description: Business Metadata
+        type: integer
+      establishment_type:
+        $ref: '#/definitions/models.EstablishmentType'
+      establishment_type_id:
+        description: Establishment Type
         type: string
       id:
         type: string
       is_active:
         type: boolean
+      is_delivery:
+        type: boolean
+      is_remote:
+        type: boolean
       is_verified:
+        description: Status
         type: boolean
       latitude:
         type: number
@@ -359,13 +356,14 @@ definitions:
         type: string
       longitude:
         type: number
+      market_name:
+        description: For Markets/Complexes (Physical)
+        type: string
       members:
-        description: Relationships
         items:
           $ref: '#/definitions/models.BusinessMember'
         type: array
       name:
-        description: 'REMOVE: UserID field - now in BusinessMember'
         type: string
       orders:
         items:
@@ -381,8 +379,26 @@ definitions:
         items:
           $ref: '#/definitions/models.Product'
         type: array
+      sector:
+        $ref: '#/definitions/models.BusinessSector'
+      sector_id:
+        type: string
+      social_media:
+        description: JSON or comma-separated
+        type: string
+      stall_number:
+        type: string
+      subcategory:
+        $ref: '#/definitions/models.BusinessSubcategory'
+      subcategory_id:
+        type: string
       updated_at:
         type: string
+      website:
+        description: For Digital/Remote Businesses
+        type: string
+      year_established:
+        type: integer
     type: object
   models.BusinessMember:
     properties:
@@ -403,13 +419,82 @@ definitions:
       joined_at:
         type: string
       role:
-        description: Uses permissions.Role values
         type: string
       updated_at:
         type: string
       user:
         $ref: '#/definitions/models.User'
       user_id:
+        type: string
+    type: object
+  models.BusinessSector:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      display_name:
+        description: 'Display: "Financial Services"'
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        description: 'Constant: "financial"'
+        type: string
+      sort_order:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.BusinessSubcategory:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      display_name:
+        description: ✅ ADD THIS
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      sector:
+        allOf:
+        - $ref: '#/definitions/models.BusinessSector'
+        description: Relationship
+      sector_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  models.BusinessType:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      display_name:
+        description: 'Display: "Private Limited Company (Ltd)"'
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        description: 'Constant: "private_company"'
+        type: string
+      updated_at:
         type: string
     type: object
   models.Category:
@@ -432,6 +517,35 @@ definitions:
         type: array
       slug:
         type: string
+      updated_at:
+        type: string
+    type: object
+  models.EstablishmentType:
+    properties:
+      businesses:
+        description: Relationships
+        items:
+          $ref: '#/definitions/models.Business'
+        type: array
+      category:
+        description: physical, digital, hybrid, mobile
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      display_name:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+      sort_order:
+        type: integer
       updated_at:
         type: string
     type: object
@@ -595,7 +709,6 @@ definitions:
       role:
         type: string
       two_factor_enabled:
-        description: 2FA fields
         type: boolean
       updated_at:
         type: string
@@ -633,36 +746,21 @@ definitions:
       total:
         type: integer
     type: object
-  service.UserInfo:
+  userhandler.UpdateUserRoleRequest:
     properties:
-      avatar:
-        type: string
-      business_id:
-        type: string
-      email:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      phoneNumber:
-        type: string
       role:
+        enum:
+        - consumer
+        - business_owner
+        - admin
+        - super_admin
+        example: business_owner
         type: string
+    required:
+    - role
     type: object
-host: localhost:8080
 info:
-  contact:
-    email: support@swagger.io
-    name: API Support
-    url: http://www.swagger.io/support
-  description: Backend API engine for Flownatty platform.
-  license:
-    name: Apache 2.0
-    url: http://www.apache.org/licenses/LICENSE-2.0.html
-  termsOfService: http://swagger.io/terms/
-  title: Flownatty Backend API
-  version: "1.0"
+  contact: {}
 paths:
   /api/v1/admin/users:
     get:
@@ -882,7 +980,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateUserRoleRequest'
+          $ref: '#/definitions/userhandler.UpdateUserRoleRequest'
       produces:
       - application/json
       responses:
@@ -997,7 +1095,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ForgotPasswordRequest'
+          $ref: '#/definitions/authhandler.ForgotPasswordRequest'
       produces:
       - application/json
       responses:
@@ -1008,7 +1106,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.ForgotPasswordResponse'
+                  $ref: '#/definitions/authhandler.ForgotPasswordResponse'
               type: object
         "400":
           description: Bad Request
@@ -1036,7 +1134,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.LoginRequest'
+          $ref: '#/definitions/authhandler.LoginRequest'
       produces:
       - application/json
       responses:
@@ -1047,7 +1145,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.TwoFactorAuthResponse'
+                  $ref: '#/definitions/authhandler.TwoFactorAuthResponse'
               type: object
         "400":
           description: Bad Request
@@ -1076,7 +1174,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.LogoutRequest'
+          $ref: '#/definitions/authhandler.LogoutRequest'
       produces:
       - application/json
       responses:
@@ -1107,7 +1205,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.RefreshTokenRequest'
+          $ref: '#/definitions/authhandler.RefreshTokenRequest'
       produces:
       - application/json
       responses:
@@ -1118,7 +1216,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.RefreshResponse'
+                  $ref: '#/definitions/authhandler.RefreshResponse'
               type: object
         "400":
           description: Bad Request
@@ -1143,7 +1241,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.RegisterRequest'
+          $ref: '#/definitions/authhandler.RegisterRequest'
       produces:
       - application/json
       responses:
@@ -1183,7 +1281,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ResendBusinessOTPRequest'
+          $ref: '#/definitions/authhandler.ResendBusinessOTPRequest'
       produces:
       - application/json
       responses:
@@ -1219,7 +1317,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.ResendOTPRequest'
+          $ref: '#/definitions/authhandler.ResendOTPRequest'
       produces:
       - application/json
       responses:
@@ -1230,7 +1328,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.OTPResponse'
+                  $ref: '#/definitions/authhandler.OTPResponse'
               type: object
         "400":
           description: Bad Request
@@ -1259,7 +1357,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.VerifyTwoFactorOTPRequest'
+          $ref: '#/definitions/authhandler.VerifyTwoFactorOTPRequest'
       produces:
       - application/json
       responses:
@@ -1270,7 +1368,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.LoginResponse'
+                  $ref: '#/definitions/authhandler.LoginResponse'
               type: object
         "400":
           description: Bad Request
@@ -1302,7 +1400,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.VerifyBusinessEmailRequest'
+          $ref: '#/definitions/authhandler.VerifyBusinessEmailRequest'
       produces:
       - application/json
       responses:
@@ -1342,7 +1440,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.VerifyOTPRequest'
+          $ref: '#/definitions/authhandler.VerifyOTPRequest'
       produces:
       - application/json
       responses:
@@ -1353,7 +1451,8 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.UserResponse'
+                  additionalProperties: true
+                  type: object
               type: object
         "400":
           description: Bad Request
@@ -1381,7 +1480,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.VerifyResetOTPRequest'
+          $ref: '#/definitions/authhandler.VerifyResetOTPRequest'
       produces:
       - application/json
       responses:
@@ -1392,7 +1491,7 @@ paths:
             - $ref: '#/definitions/response.BaseResponse'
             - properties:
                 data:
-                  $ref: '#/definitions/handler.VerifyResetOTPResponse'
+                  $ref: '#/definitions/authhandler.VerifyResetOTPResponse'
               type: object
         "400":
           description: Bad Request
@@ -1409,9 +1508,95 @@ paths:
       summary: Verify reset OTP - Step 2
       tags:
       - Auth
+  /api/v1/business-sectors:
+    get:
+      description: Get all business sectors (industry categories) for dropdowns
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BusinessSector'
+                  type: array
+              type: object
+      summary: Get all business sectors
+      tags:
+      - Business
+  /api/v1/business-subcategories:
+    get:
+      description: Get all business subcategories for dropdowns
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BusinessSubcategory'
+                  type: array
+              type: object
+      summary: Get all business subcategories
+      tags:
+      - Business
+  /api/v1/business-subcategories/sector/{sectorId}:
+    get:
+      description: Get business subcategories filtered by sector ID
+      parameters:
+      - description: Sector ID
+        in: path
+        name: sectorId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BusinessSubcategory'
+                  type: array
+              type: object
+      summary: Get business subcategories by sector
+      tags:
+      - Business
+  /api/v1/business-types:
+    get:
+      description: Get all business types (legal structures) for dropdowns
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.BusinessType'
+                  type: array
+              type: object
+      summary: Get all business types
+      tags:
+      - Business
   /api/v1/businesses/{id}:
     delete:
-      description: Delete a business (owners only)
+      description: Delete a business (requires admin or owner role)
       parameters:
       - description: Business ID
         in: path
@@ -1484,7 +1669,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update business details
+      description: Update business details (requires admin or manager role)
       parameters:
       - description: Business ID
         in: path
@@ -1496,7 +1681,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateBusinessRequest'
+          $ref: '#/definitions/bizhandler.UpdateBusinessRequest'
       produces:
       - application/json
       responses:
@@ -1581,7 +1766,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Add a user as a member of a business (owners only)
+      description: Add a user as a member of a business (admins only)
       parameters:
       - description: Business ID
         in: path
@@ -1593,7 +1778,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.AddMemberRequest'
+          $ref: '#/definitions/bizhandler.AddMemberRequest'
       produces:
       - application/json
       responses:
@@ -1633,7 +1818,7 @@ paths:
       - Business Members
   /api/v1/businesses/{id}/members/{memberId}:
     delete:
-      description: Remove a member from a business (owners only)
+      description: Remove a member from a business (admins only)
       parameters:
       - description: Business ID
         in: path
@@ -1680,7 +1865,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Update a member's role in a business (owners only)
+      description: Update a member's role in a business (admins only)
       parameters:
       - description: Business ID
         in: path
@@ -1697,7 +1882,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handler.UpdateMemberRoleRequest'
+          $ref: '#/definitions/bizhandler.UpdateMemberRoleRequest'
       produces:
       - application/json
       responses:
@@ -1730,6 +1915,228 @@ paths:
       summary: Update member role
       tags:
       - Business Members
+  /api/v1/businesses/{id}/stats:
+    get:
+      description: Get statistics for a business (requires admin or manager role)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Get business statistics
+      tags:
+      - Business
+  /api/v1/businesses/{id}/verify:
+    post:
+      description: Verify a business (platform admin only)
+      parameters:
+      - description: Business ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      security:
+      - BearerAuth: []
+      summary: Verify a business
+      tags:
+      - Business
+  /api/v1/businesses/by-sector:
+    get:
+      description: Get all businesses in a specific sector (e.g., technology, financial)
+      parameters:
+      - description: Sector
+        enum:
+        - retail
+        - wholesale
+        - fashion
+        - beauty
+        - food
+        - health
+        - agriculture
+        - construction
+        - real_estate
+        - transport
+        - logistics
+        - hospitality
+        - tourism
+        - education
+        - professional
+        - financial
+        - technology
+        - telecom
+        - energy
+        - manufacturing
+        - mining
+        - automotive
+        - entertainment
+        - media
+        - sports
+        - creative
+        - community
+        - environment
+        - security
+        - cleaning
+        - veterinary
+        in: query
+        name: sector
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Get businesses by sector
+      tags:
+      - Business
+  /api/v1/businesses/by-type:
+    get:
+      description: Get all businesses of a specific type (e.g., private_company, sole_proprietorship)
+      parameters:
+      - description: Business type
+        enum:
+        - sole_proprietorship
+        - sole_trader
+        - partnership
+        - limited_partnership
+        - private_company
+        - public_company
+        - limited_by_guarantee
+        - cooperative
+        - sacco
+        - ngo
+        - cbo
+        - trust
+        - foundation
+        - faith_based
+        - franchise
+        - epz
+        - special_economic
+        - state_corporation
+        - government_agency
+        in: query
+        name: business_type
+        required: true
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Page size
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  additionalProperties: true
+                  type: object
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Get businesses by business type
+      tags:
+      - Business
   /api/v1/businesses/me:
     get:
       description: Get the authenticated user's primary business
@@ -1795,6 +2202,42 @@ paths:
       summary: Get all my businesses
       tags:
       - Business
+  /api/v1/businesses/name/{name}:
+    get:
+      description: Get business details by name
+      parameters:
+      - description: Business Name
+        in: path
+        name: name
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.Business'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.BaseResponse'
+      summary: Get business by name
+      tags:
+      - Business
   /api/v1/businesses/search:
     get:
       description: Search for businesses by name or category
@@ -1850,10 +2293,24 @@ paths:
       summary: Search businesses
       tags:
       - Business
-securityDefinitions:
-  BearerAuth:
-    description: Type "Bearer" followed by a space and the JWT token.
-    in: header
-    name: Authorization
-    type: apiKey
+  /api/v1/establishment-types:
+    get:
+      description: Get all establishment types for dropdowns
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.BaseResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/models.EstablishmentType'
+                  type: array
+              type: object
+      summary: Get all establishment types
+      tags:
+      - Business
 swagger: "2.0"

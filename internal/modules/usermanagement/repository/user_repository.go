@@ -19,7 +19,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 
 // GetAllUsers - Admin can see all users including soft-deleted
 func (r *UserRepository) GetAllUsers(limit, offset int, search string) ([]models.User, int64, error) {
-	var users []models.User
+	var users []models.User // List of users to return
 	var total int64
 
 	// Use Unscoped() to include soft-deleted users
@@ -34,6 +34,8 @@ func (r *UserRepository) GetAllUsers(limit, offset int, search string) ([]models
 		return nil, 0, err
 	}
 
+
+	// Preload related data and apply pagination .. err stores the error from the query otherwise it will be nil .. users will be the list of users and total will be the count of users matching the search criteria
 	err := db.Preload("BusinessMembers").
 		Preload("BusinessMembers.Business").
 		Preload("BusinessMembers.User").

@@ -1,18 +1,5 @@
 package permissions
 
-
-// Purpose: Business logic layer for permission management.
-
-// What it does:
-
-// Wraps enforcer methods with business logic
-
-// Handles role assignments for different user types
-
-// Adds business-specific policies when a business is created
-
-// Provides clean API for other modules to use
-
 import (
 	"context"
 	"fmt"
@@ -41,12 +28,12 @@ func (s *Service) AssignConsumerRole(ctx context.Context, userID string) error {
 	return nil
 }
 
-// AssignBusinessOwnerRole assigns the business owner role to a user
-func (s *Service) AssignBusinessOwnerRole(ctx context.Context, userID string, businessID string) error {
-	log.Printf("Assigning business owner role to user: %s for business: %s", userID, businessID)
-	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleBusinessOwner)
+// AssignBusinessAdminRole assigns the business admin role to a user
+func (s *Service) AssignBusinessAdminRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning business admin role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleBusinessAdmin)
 	if err != nil {
-		return fmt.Errorf("failed to assign business owner role: %w", err)
+		return fmt.Errorf("failed to assign business admin role: %w", err)
 	}
 
 	// Add business policies for this business
@@ -58,12 +45,52 @@ func (s *Service) AssignBusinessOwnerRole(ctx context.Context, userID string, bu
 	return nil
 }
 
-// AssignBusinessStaffRole assigns the business staff role to a user
-func (s *Service) AssignBusinessStaffRole(ctx context.Context, userID string, businessID string) error {
-	log.Printf("Assigning business staff role to user: %s for business: %s", userID, businessID)
-	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleBusinessStaff)
+// AssignProductManagerRole assigns the product manager role to a user
+func (s *Service) AssignProductManagerRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning product manager role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleProductManager)
 	if err != nil {
-		return fmt.Errorf("failed to assign business staff role: %w", err)
+		return fmt.Errorf("failed to assign product manager role: %w", err)
+	}
+	return nil
+}
+
+// AssignOrderManagerRole assigns the order manager role to a user
+func (s *Service) AssignOrderManagerRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning order manager role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleOrderManager)
+	if err != nil {
+		return fmt.Errorf("failed to assign order manager role: %w", err)
+	}
+	return nil
+}
+
+// AssignContentManagerRole assigns the content manager role to a user
+func (s *Service) AssignContentManagerRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning content manager role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleContentManager)
+	if err != nil {
+		return fmt.Errorf("failed to assign content manager role: %w", err)
+	}
+	return nil
+}
+
+// AssignServiceManagerRole assigns the service manager role to a user
+func (s *Service) AssignServiceManagerRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning service manager role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleServiceManager)
+	if err != nil {
+		return fmt.Errorf("failed to assign service manager role: %w", err)
+	}
+	return nil
+}
+
+// AssignCustomerSupportRole assigns the customer support role to a user
+func (s *Service) AssignCustomerSupportRole(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Assigning customer support role to user: %s for business: %s", userID, businessID)
+	_, err := s.enforcer.AddBusinessRole(userID, businessID, RoleCustomerSupport)
+	if err != nil {
+		return fmt.Errorf("failed to assign customer support role: %w", err)
 	}
 	return nil
 }
@@ -78,87 +105,92 @@ func (s *Service) RemoveBusinessRole(ctx context.Context, userID string, busines
 	return nil
 }
 
+// RemoveAllBusinessRoles removes all business roles from a user
+func (s *Service) RemoveAllBusinessRoles(ctx context.Context, userID string, businessID string) error {
+	log.Printf("Removing all roles for user: %s from business: %s", userID, businessID)
+	
+	domain := BusinessDomain(businessID)
+	roles := s.enforcer.GetRolesForUserInDomain(userID, domain)
+	
+	for _, role := range roles {
+		_, err := s.enforcer.RemoveBusinessRole(userID, businessID, Role(role))
+		if err != nil {
+			return fmt.Errorf("failed to remove role %s: %w", role, err)
+		}
+	}
+	
+	return nil
+}
+
 // AddBusinessPolicies adds default policies for a new business
 func (s *Service) AddBusinessPolicies(ctx context.Context, businessID string) error {
 	domain := BusinessDomain(businessID)
 	log.Printf("Adding business policies for business: %s", businessID)
 
-	// Define policies for business owner
-	policies := [][]string{
-		// Product management
-		{RoleBusinessOwner.String(), domain, ResourceProduct.String(), ActionCreate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceProduct.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceProduct.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceProduct.String(), ActionDelete.String()},
+	// Define policies for business admain
+	policies := [][]string{ // this data structure is a slice of slices of strings, where each inner slice represents a policy rule
+		// Product Management
+		{RoleBusinessAdmin.String(), domain, ResourceProduct.String(), ActionCreate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceProduct.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceProduct.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceProduct.String(), ActionDelete.String()},
 
-		// Order management
-		{RoleBusinessOwner.String(), domain, ResourceOrder.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceOrder.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceOrder.String(), ActionDelete.String()},
+		// Order Management
+		{RoleBusinessAdmin.String(), domain, ResourceOrder.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceOrder.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceOrder.String(), ActionDelete.String()},
 
-		// Booking management
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), ActionDelete.String()},
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), "confirm"},
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), "complete"},
-		{RoleBusinessOwner.String(), domain, ResourceBooking.String(), "cancel"},
+		// Booking Management
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), ActionDelete.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), "confirm"},
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), "complete"},
+		{RoleBusinessAdmin.String(), domain, ResourceBooking.String(), "cancel"},
 
-		// Post management
-		{RoleBusinessOwner.String(), domain, ResourcePost.String(), ActionCreate.String()},
-		{RoleBusinessOwner.String(), domain, ResourcePost.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourcePost.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourcePost.String(), ActionDelete.String()},
+		// Post Management
+		{RoleBusinessAdmin.String(), domain, ResourcePost.String(), ActionCreate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourcePost.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourcePost.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourcePost.String(), ActionDelete.String()},
 
-		// Chat management
-		{RoleBusinessOwner.String(), domain, ResourceChat.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceChat.String(), ActionCreate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceChat.String(), ActionUpdate.String()},
+		// Chat Management
+		{RoleBusinessAdmin.String(), domain, ResourceChat.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceChat.String(), ActionCreate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceChat.String(), ActionUpdate.String()},
 
-		// Business profile
-		{RoleBusinessOwner.String(), domain, ResourceBusiness.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceBusiness.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceBusiness.String(), ActionDelete.String()},
+		// Business Profile Management
+		{RoleBusinessAdmin.String(), domain, ResourceBusiness.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceBusiness.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceBusiness.String(), ActionDelete.String()},
 
-		// Invoice management
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), ActionCreate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), ActionDelete.String()},
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), "send"},
-		{RoleBusinessOwner.String(), domain, ResourceInvoice.String(), "mark_paid"},
+		// Invoice Management
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), ActionCreate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), ActionDelete.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), "send"},
+		{RoleBusinessAdmin.String(), domain, ResourceInvoice.String(), "mark_paid"},
 
-		// Lead management
-		{RoleBusinessOwner.String(), domain, ResourceLead.String(), ActionCreate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceLead.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceLead.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceLead.String(), ActionDelete.String()},
-		{RoleBusinessOwner.String(), domain, ResourceLead.String(), "convert"},
+		// Lead Management
+		{RoleBusinessAdmin.String(), domain, ResourceLead.String(), ActionCreate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceLead.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceLead.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceLead.String(), ActionDelete.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceLead.String(), "convert"},
 
-		// Customer management
-		{RoleBusinessOwner.String(), domain, ResourceCustomer.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceCustomer.String(), ActionUpdate.String()},
-		{RoleBusinessOwner.String(), domain, ResourceCustomer.String(), ActionDelete.String()},
+		// Customer Management
+		{RoleBusinessAdmin.String(), domain, ResourceCustomer.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceCustomer.String(), ActionUpdate.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceCustomer.String(), ActionDelete.String()},
 
-		// Payment
-		{RoleBusinessOwner.String(), domain, ResourcePayment.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourcePayment.String(), "refund"},
+		// Payment Management
+		{RoleBusinessAdmin.String(), domain, ResourcePayment.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourcePayment.String(), "refund"},
 
-		// Dashboard and analytics
-		{RoleBusinessOwner.String(), domain, ResourceDashboard.String(), ActionRead.String()},
-		{RoleBusinessOwner.String(), domain, ResourceAnalytics.String(), ActionRead.String()},
-
-		// Staff policies
-		{RoleBusinessStaff.String(), domain, ResourceOrder.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourceOrder.String(), ActionUpdate.String()},
-		{RoleBusinessStaff.String(), domain, ResourceBooking.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourceBooking.String(), ActionUpdate.String()},
-		{RoleBusinessStaff.String(), domain, ResourceChat.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourceChat.String(), ActionCreate.String()},
-		{RoleBusinessStaff.String(), domain, ResourceCustomer.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourceProduct.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourcePayment.String(), ActionRead.String()},
-		{RoleBusinessStaff.String(), domain, ResourceDashboard.String(), ActionRead.String()},
+		// Dashboard and Analytics
+		{RoleBusinessAdmin.String(), domain, ResourceDashboard.String(), ActionRead.String()},
+		{RoleBusinessAdmin.String(), domain, ResourceAnalytics.String(), ActionRead.String()},
 	}
 
 	// Add all policies using AddPolicies for better performance
@@ -176,13 +208,11 @@ func (s *Service) RemoveBusinessPolicies(ctx context.Context, businessID string)
 	domain := BusinessDomain(businessID)
 	log.Printf("Removing policies for business: %s", businessID)
 
-	// Get all policies for this domain
 	policies, err := s.enforcer.GetFilteredPolicy(1, domain)
 	if err != nil {
 		return fmt.Errorf("failed to get filtered policies: %w", err)
 	}
 
-	// Remove all policies
 	if len(policies) > 0 {
 		_, err := s.enforcer.RemovePolicies(policies)
 		if err != nil {

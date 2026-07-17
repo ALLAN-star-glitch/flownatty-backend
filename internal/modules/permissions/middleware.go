@@ -1,39 +1,5 @@
 package permissions
 
-// Middleware for Gin to enforce permissions using Casbin
-
-// Purpose: Gin middleware for authorization.
-
-// What it does:
-
-// AuthorizationMiddleware:
-
-// Extracts user ID from Gin context
-
-// Determines domain from request path
-
-// Determines resource from request path
-
-// Determines action from HTTP method
-
-// Calls enforcer.Enforce() to check permission
-
-// Allows or denies the request
-
-// RequireBusinessOwner:
-
-// Extracts business ID from request
-
-// Checks if user has business_owner role in that domain
-
-// Denies if not the owner
-
-// RequirePlatformRole:
-
-// Checks if user has specific platform roles (admin, super_admin)
-
-// Denies if not authorized
-
 import (
 	"net/http"
 	"strings"
@@ -95,11 +61,11 @@ func AuthorizationMiddleware(enforcer *Enforcer) gin.HandlerFunc {
 		allowed, err := enforcer.EnforceWithContext(userIDStr, domain, resource, action)
 		if err != nil {
 			response.InternalError(c, "Authorization error", gin.H{
-				"error": err.Error(),
-				"user":  userIDStr,
-				"domain": domain,
+				"error":    err.Error(),
+				"user":     userIDStr,
+				"domain":   domain,
 				"resource": resource,
-				"action": action,
+				"action":   action,
 			})
 			c.Abort()
 			return
@@ -182,17 +148,18 @@ func RequireRoles(enforcer *Enforcer, roles ...Role) gin.HandlerFunc {
 		}
 
 		response.Forbidden(c, "Insufficient roles", gin.H{
-			"user":         userIDStr,
-			"domain":       domainStr,
+			"user":           userIDStr,
+			"domain":         domainStr,
 			"required_roles": requiredRoleNames,
-			"user_roles":   userRoles,
+			"user_roles":     userRoles,
 		})
 		c.Abort()
 	}
 }
 
-// RequireBusinessOwner creates middleware to check business ownership
-func RequireBusinessOwner(enforcer *Enforcer) gin.HandlerFunc {
+// RequireBusinessAdmin creates middleware to check if user is a business admin
+// This replaces the old RequireBusinessOwner middleware
+func RequireBusinessAdmin(enforcer *Enforcer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get(ContextKeyUserID)
 		if !exists {
@@ -231,10 +198,12 @@ func RequireBusinessOwner(enforcer *Enforcer) gin.HandlerFunc {
 			return
 		}
 
-		if !enforcer.IsBusinessOwner(userIDStr, businessID) {
-			response.Forbidden(c, "Not a business owner", gin.H{
-				"user":        userIDStr,
-				"business_id": businessID,
+		// Check if user has business_admin role
+		if !enforcer.IsBusinessAdmin(userIDStr, businessID) {
+			response.Forbidden(c, "Not a business admin", gin.H{
+				"user":          userIDStr,
+				"business_id":   businessID,
+				"required_role": RoleBusinessAdmin.String(),
 			})
 			c.Abort()
 			return
@@ -245,8 +214,8 @@ func RequireBusinessOwner(enforcer *Enforcer) gin.HandlerFunc {
 	}
 }
 
-// RequireBusinessAccess creates middleware to check any business role access
-func RequireBusinessAccess(enforcer *Enforcer) gin.HandlerFunc {
+// RequireBusinessRole creates middleware to check if user has ANY business role
+func RequireBusinessRole(enforcer *Enforcer) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userID, exists := c.Get(ContextKeyUserID)
 		if !exists {
@@ -290,7 +259,13 @@ func RequireBusinessAccess(enforcer *Enforcer) gin.HandlerFunc {
 		// Check if user has any business role
 		hasAccess := false
 		for _, role := range roles {
-			if role == RoleBusinessOwner.String() || role == RoleBusinessStaff.String() {
+			switch role {
+			case RoleBusinessAdmin.String(),
+				RoleProductManager.String(),
+				RoleOrderManager.String(),
+				RoleContentManager.String(),
+				RoleServiceManager.String(),
+				RoleCustomerSupport.String():
 				hasAccess = true
 				break
 			}
@@ -363,7 +338,62 @@ func RequirePlatformRole(enforcer *Enforcer, roles ...Role) gin.HandlerFunc {
 	}
 }
 
+// RequireBusinessAccess creates middleware that checks if user has ANY business role
+// Use this for /businesses/me and /businesses/my endpoints
+func RequireBusinessAccess(enforcer *Enforcer) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userID, exists := c.Get(ContextKeyUserID)
+		if !exists {
+			response.Unauthorized(c, "User not authenticated", gin.H{
+				"reason": "user_id not found in context",
+			})
+			c.Abort()
+			return
+		}
+
+		userIDStr, ok := userID.(string)
+		if !ok {
+			response.Unauthorized(c, "Invalid user ID", gin.H{
+				"reason": "user_id is not a string",
+			})
+			c.Abort()
+			return
+		}
+
+		// Check if user has ANY business role
+		hasBusinessAccess := enforcer.HasAnyBusinessRole(userIDStr)
+
+		if !hasBusinessAccess {
+			// Get user's businesses for debugging
+			businesses := enforcer.GetUserBusinesses(userIDStr)
+			platformRoles := enforcer.GetUserPlatformRoles(userIDStr)
+
+			response.Forbidden(c, "User does not belong to any business", gin.H{
+				"user":           userIDStr,
+				"businesses":     businesses,
+				"platform_roles": platformRoles,
+				"message":        "User must be a member of at least one business to access this endpoint",
+			})
+			c.Abort()
+			return
+		}
+
+		// Store user ID in context for downstream handlers
+		c.Set(ContextKeyUserID, userIDStr)
+
+		// Get user's businesses and store the first one as default if needed
+		businesses := enforcer.GetUserBusinesses(userIDStr)
+		if len(businesses) > 0 {
+			c.Set(ContextKeyBusinessID, businesses[0])
+		}
+
+		c.Next()
+	}
+}
+
 // getDomainFromRequest extracts the domain from the request
+
+
 func getDomainFromRequest(c *gin.Context) string {
 	// Check if domain is in context (set by previous middleware)
 	if domain, exists := c.Get(ContextKeyDomain); exists {
@@ -372,8 +402,21 @@ func getDomainFromRequest(c *gin.Context) string {
 		}
 	}
 
-	// Check if business ID is in path
+	path := c.Request.URL.Path
+
+	// ✅ Check business routes FIRST (before user routes)
+	if strings.Contains(path, "/businesses/me") ||
+		strings.Contains(path, "/business/me") ||
+		strings.Contains(path, "/businesses/my") ||
+		strings.Contains(path, "/business/my") {
+		return DomainPlatform
+	}
+
+	// ✅ Check for business ID in path - check BOTH "id" and "businessId"
 	businessID := c.Param("businessId")
+	if businessID == "" {
+		businessID = c.Param("id") // ✅ Also check "id" parameter
+	}
 	if businessID != "" {
 		return BusinessDomain(businessID)
 	}
@@ -390,8 +433,8 @@ func getDomainFromRequest(c *gin.Context) string {
 		return UserDomain(userID)
 	}
 
-	// Check if it's the current user
-	if c.Request.URL.Path == "/api/v1/profile" {
+	// Check if it's the current user profile
+	if strings.Contains(path, "/profile") && !strings.Contains(path, "/businesses/") {
 		if userID, exists := c.Get(ContextKeyUserID); exists {
 			if userIDStr, ok := userID.(string); ok {
 				return UserDomain(userIDStr)
@@ -399,8 +442,8 @@ func getDomainFromRequest(c *gin.Context) string {
 		}
 	}
 
-	// Check if it's a me endpoint
-	if strings.Contains(c.Request.URL.Path, "/me") {
+	// Check if it's a me endpoint (but NOT business me - already handled above)
+	if strings.Contains(path, "/me") && !strings.Contains(path, "/businesses/") {
 		if userID, exists := c.Get(ContextKeyUserID); exists {
 			if userIDStr, ok := userID.(string); ok {
 				return UserDomain(userIDStr)
@@ -413,6 +456,8 @@ func getDomainFromRequest(c *gin.Context) string {
 }
 
 // getResourceFromRequest extracts the resource from the request path
+
+
 func getResourceFromRequest(c *gin.Context) string {
 	path := c.Request.URL.Path
 
@@ -424,14 +469,26 @@ func getResourceFromRequest(c *gin.Context) string {
 	// Get the first segment
 	segments := strings.Split(path, "/")
 	if len(segments) > 0 && segments[0] != "" {
-		// Handle special cases
 		resource := segments[0]
+
+		// Handle business "me" endpoints
+		if resource == "businesses" || resource == "business" {
+			if len(segments) > 1 && (segments[1] == "me" || segments[1] == "my") {
+				return ResourceBusiness.String()
+			}
+			// ✅ Handle member endpoints - check for "members" in any position
+			for _, segment := range segments {
+				if segment == "members" {
+					return ResourceMember.String()
+				}
+			}
+		}
 
 		// Map common URL patterns to resources
 		switch resource {
 		case "profile", "me":
 			return ResourceUser.String()
-		case "businesses":
+		case "businesses", "business":
 			return ResourceBusiness.String()
 		case "products":
 			return ResourceProduct.String()
@@ -463,6 +520,8 @@ func getResourceFromRequest(c *gin.Context) string {
 			return ResourceDashboard.String()
 		case "analytics":
 			return ResourceAnalytics.String()
+		case "members":
+			return ResourceMember.String()
 		default:
 			return resource
 		}
